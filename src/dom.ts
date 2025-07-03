@@ -3,16 +3,16 @@
  */
 export const getDOMParser = async (): Promise<DOMParser> => {
   // browser environment
-  if (typeof window !== "undefined") {
-    return new DOMParser();
+  if (typeof window !== 'undefined') {
+    return new DOMParser()
   }
 
   // Node environment... hopefully Nuxt can treeshake JSDOM from clientside
-  const jsdomModule = await import("jsdom");
-  const { JSDOM } = jsdomModule;
-  const jsdom = new JSDOM();
-  return new jsdom.window.DOMParser();
-};
+  const jsdomModule = await import('jsdom')
+  const { JSDOM } = jsdomModule
+  const jsdom = new JSDOM()
+  return new jsdom.window.DOMParser()
+}
 
 export const getNodeType = (maybeNode: unknown): number | undefined => {
   // this comparison must avoid using conventional `val instanceof HTMLElement`
@@ -20,25 +20,25 @@ export const getNodeType = (maybeNode: unknown): number | undefined => {
   // type in Node, not as a runtime `instanceof` check of a class).
   if (
     maybeNode &&
-    typeof maybeNode === "object" &&
-    "nodeType" in maybeNode &&
-    typeof maybeNode.nodeType === "number"
+    typeof maybeNode === 'object' &&
+    'nodeType' in maybeNode &&
+    typeof maybeNode.nodeType === 'number'
   ) {
-    return maybeNode.nodeType;
+    return maybeNode.nodeType
   }
-};
+}
 
-const W3CDOM_NODETYPE_ELEMENT = 1;
-const W3CDOM_NODETYPE_TEXT = 3;
+const W3CDOM_NODETYPE_ELEMENT = 1
+const W3CDOM_NODETYPE_TEXT = 3
 
 /**
  * Technically just checks whether it's an Element not an HTMLElement
  * but this is sufficient for our needs
  */
 export const isHtmlElement = (
-  maybeHtmlElement: unknown,
+  maybeHtmlElement: unknown
 ): maybeHtmlElement is HTMLElement =>
-  getNodeType(maybeHtmlElement) === W3CDOM_NODETYPE_ELEMENT;
+  getNodeType(maybeHtmlElement) === W3CDOM_NODETYPE_ELEMENT
 
 export const isTextNode = (maybeText: unknown): maybeText is Text =>
-  getNodeType(maybeText) === W3CDOM_NODETYPE_TEXT;
+  getNodeType(maybeText) === W3CDOM_NODETYPE_TEXT

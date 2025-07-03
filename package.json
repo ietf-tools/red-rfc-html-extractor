@@ -5,7 +5,7 @@
   "main": "src/index.ts",
   "scripts": {
     "generate": "node --experimental-strip-types ./src/index.ts 1137",
-    "format": "npx prettier src --write",
+    "format": "npx prettier --config ./prettier.config.cjs src --write",
     "test": "vitest src/index.test.ts"
   },
   "repository": {
