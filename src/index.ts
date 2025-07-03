@@ -1,4 +1,5 @@
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import fsPromise from "node:fs/promises";
 
 import {
@@ -6,10 +7,29 @@ import {
   rfcBucketHtmlToRfcDocument,
   rfcBucketHtmlFilenameBuilder,
 } from "./utils.ts";
+import type { RfcBucketHtmlDocument } from "./rfc.ts";
 
-const __dirname =  import.meta.dirname;
+const __dirname = import.meta.dirname;
 
-const main = async (rfcNumber: number): Promise<void> => {
+ const main = async (rfcNumber: number): Promise<void> => {
+  const rfcBucketHtmlDocument = await processRfcBucketHtml(rfcNumber);
+
+  // write file
+  const rfcBucketHtmlJSON = JSON.stringify(rfcBucketHtmlDocument);
+  const targetPath = path.join(
+    __dirname,
+    "../out/",
+    rfcBucketHtmlFilenameBuilder(rfcBucketHtmlDocument.rfc.number),
+  );
+  await fsPromise.writeFile(targetPath, rfcBucketHtmlJSON, {
+    encoding: "utf-8",
+  });
+  process.stdout.write(`RFC HTML JSON written to ${targetPath}`);
+};
+
+export const processRfcBucketHtml = async (
+  rfcNumber: number,
+): Promise<RfcBucketHtmlDocument> => {
   const url = apiRfcBucketHtmlURLBuilder(rfcNumber);
   const response = await fetch(url);
   if (!response.ok) {
@@ -18,30 +38,19 @@ const main = async (rfcNumber: number): Promise<void> => {
     );
   }
   const html = await response.text();
-
-  const rfcBucketHtmlDocument = await rfcBucketHtmlToRfcDocument(html);
-
-  const rfcBucketHtmlJSON = JSON.stringify(rfcBucketHtmlDocument);
-
-  const targetPath = path.join(
-    __dirname,
-    "../out/",
-    rfcBucketHtmlFilenameBuilder(rfcNumber),
-  );
-
-  await fsPromise.writeFile(targetPath, rfcBucketHtmlJSON, {
-    encoding: "utf-8",
-  });
-
-  process.stdout.write(`RFC HTML JSON written to ${targetPath}`);
+  return rfcBucketHtmlToRfcDocument(html);
 };
 
-const rfcNumberArg = process.argv[2];
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  // module was not imported but called directly
 
-if (!rfcNumberArg) {
-  throw Error(
-    `Script requires RFC Number arg but argv was ${JSON.stringify(process.argv)}`,
-  );
+  const rfcNumberArg = process.argv[2];
+
+  if (!rfcNumberArg) {
+    throw Error(
+      `Script requires RFC Number arg but argv was ${JSON.stringify(process.argv)}`,
+    );
+  }
+
+  main(parseInt(rfcNumberArg, 10)).catch(console.error);
 }
-
-main(parseInt(rfcNumberArg, 10)).catch(console.error);

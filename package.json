@@ -6,13 +6,13 @@
   "scripts": {
     "generate": "node --experimental-strip-types ./src/index.ts 1137",
     "format": "npx prettier src --write",
-    "test": "src/index.test.ts"
+    "test": "vitest src/index.test.ts"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ietf-tools/red-rfc-html-worker.git"
   },
-  "author": "",
+  "author": "IETF",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/ietf-tools/red-rfc-html-worker/issues"
@@ -20,12 +20,12 @@
   "homepage": "https://github.com/ietf-tools/red-rfc-html-worker#readme",
   "description": "",
   "dependencies": {
-    "typescript": "^5.8.3",
-    "vitest": "^3.2.4"
+    "jsdom": "^26.1.0"
   },
   "devDependencies": {
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4",
     "@types/jsdom": "^21.1.7",
-    "@types/node": "^24.0.10",
-    "jsdom": "^26.1.0"
+    "@types/node": "^24.0.10"
   }
 }
