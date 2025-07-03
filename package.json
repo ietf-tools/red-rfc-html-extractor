@@ -1,0 +1,31 @@
+{
+  "name": "red-rfc-html-worker",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "generate": "node --experimental-strip-types ./src/index.ts 1137",
+    "format": "npx prettier src --write",
+    "test": "src/index.test.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ietf-tools/red-rfc-html-worker.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ietf-tools/red-rfc-html-worker/issues"
+  },
+  "homepage": "https://github.com/ietf-tools/red-rfc-html-worker#readme",
+  "description": "",
+  "dependencies": {
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  },
+  "devDependencies": {
+    "@types/jsdom": "^21.1.7",
+    "@types/node": "^24.0.10",
+    "jsdom": "^26.1.0"
+  }
+}
