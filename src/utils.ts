@@ -244,7 +244,7 @@ export const isTocSection = (
 }
 
 export const rfcBucketHtmlFilenameBuilder = (rfcNumber: number) =>
-  `rfc${rfcNumber}-html.json`
+  `rfc${rfcNumber}.json`
 
 export const getInnerText = (element: HTMLElement): string => {
   return Array.from(element.childNodes)
