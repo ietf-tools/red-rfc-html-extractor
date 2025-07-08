@@ -5,6 +5,7 @@ on:
     paths:
       - src/**
       - package.json
+      - Dockerfile
   workflow_dispatch:
 
 jobs:
