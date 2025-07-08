@@ -243,9 +243,6 @@ export const isTocSection = (
   )
 }
 
-export const rfcBucketHtmlFilenameBuilder = (rfcNumber: number) =>
-  `rfc${rfcNumber}.json`
-
 export const getInnerText = (element: HTMLElement): string => {
   return Array.from(element.childNodes)
     .map((node) => {
@@ -257,4 +254,16 @@ export const getInnerText = (element: HTMLElement): string => {
       return ''
     })
     .join('')
+}
+
+export const processRfcBucketHtml = async (
+  rfcNumber: number
+): Promise<RfcBucketHtmlDocument> => {
+  const url = apiRfcBucketHtmlURLBuilder(rfcNumber)
+  const response = await fetch(url)
+  if (!response.ok) {
+    throw Error(`Unable to fetch ${url}: ${response.status} ${response.statusText}`)
+  }
+  const html = await response.text()
+  return rfcBucketHtmlToRfcDocument(html)
 }
