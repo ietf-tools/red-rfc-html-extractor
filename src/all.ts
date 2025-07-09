@@ -15,7 +15,7 @@ const main = async (maxRfcNumber: number): Promise<void> => {
         console.log(`Failed to fetch RFC ${rfcNumber}, skipping...`)
         continue
       }
-      await setTimeout(250)
+      await setTimeout(100)
     } catch (err) {
       console.warn(`Failed to process ${rfcNumber}: ${(err as Error).message}`)
     }
