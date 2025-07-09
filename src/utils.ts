@@ -2,15 +2,6 @@ import { getDOMParser, isHtmlElement, isTextNode } from './dom.ts'
 import { blankRfcCommon } from './rfc.ts'
 import type { RfcCommon, RfcEditorToc, RfcBucketHtmlDocument } from './rfc.ts'
 
-export const PUBLIC_SITE = 'https://www.rfc-editor.org'
-export const apiRfcBucketHtmlURLBuilder = (rfcNumber: number) => {
-  // Intentionally not a relative url, the PUBLIC_SITE prefix is because this URL is served
-  // from a bucket on prod; it's not something that a localhost Nuxt can serve.
-  // The CORS headers of the prod URL should allow access from localhost:3000 as well as staging,
-  // etc. sites.
-  return `${PUBLIC_SITE}/rfc-neue/rfc${rfcNumber}.html` as const
-}
-
 export const rfcBucketHtmlToRfcDocument = async (
   rfcBucketHtml: string
 ): Promise<RfcBucketHtmlDocument> => {
@@ -256,14 +247,13 @@ export const getInnerText = (element: HTMLElement): string => {
     .join('')
 }
 
-export const processRfcBucketHtml = async (
+export const fetchSourceRfcHtml = async (
   rfcNumber: number
-): Promise<RfcBucketHtmlDocument> => {
-  const url = apiRfcBucketHtmlURLBuilder(rfcNumber)
+): Promise<string> => {
+  const url = `https://www.rfc-editor.org/rfc-neue/rfc${rfcNumber}.html`
   const response = await fetch(url)
   if (!response.ok) {
     throw Error(`Unable to fetch ${url}: ${response.status} ${response.statusText}`)
   }
-  const html = await response.text()
-  return rfcBucketHtmlToRfcDocument(html)
+  return response.text()
 }
