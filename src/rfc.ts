@@ -125,4 +125,5 @@ export type RfcBucketHtmlDocument = {
   rfc: RfcCommon
   tableOfContents?: RfcEditorToc
   documentHtml: string
+  documentHtmlType: 'plaintext' | 'xml2rfc'
 }

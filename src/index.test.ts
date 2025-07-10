@@ -1,21 +1,32 @@
 // @vitest-environment node
 import { test, expect } from 'vitest'
-import { processRfcBucketHtml } from './utils'
+import {
+  fetchSourceRfcHtml,
+  rfcBucketHtmlToRfcDocument
+} from './red-rfc-html-extractor-shared/index.ts'
 
-const RFC_WITH_PREFORMATTED_HTML = 1234
-const RFC_WITH_HTML = 9000
+const processRfcBucketHtml = async (rfcNumber: number) => {
+  const html = await fetchSourceRfcHtml(rfcNumber)
+  if (html) {
+    return rfcBucketHtmlToRfcDocument(html)
+  }
+}
 
-test(`processRfcBucketHtml(${RFC_WITH_PREFORMATTED_HTML}) RFC without TOC`, async () => {
-  const rfcBucketHtmlDocument = await processRfcBucketHtml(RFC_WITH_PREFORMATTED_HTML)
-  expect(
-    rfcBucketHtmlDocument
-  ).toMatchSnapshot()
+const RFC_PLAINTEXT_EXAMPLE = 2000
+const RFC_XML2RFC_EXAMPLE = 9000
 
-  expect(rfcBucketHtmlDocument.tableOfContents).toBeUndefined()
+test(`processRfcBucketHtml(${RFC_PLAINTEXT_EXAMPLE}) RFC without TOC`, async () => {
+  const rfcBucketHtmlDocument = await processRfcBucketHtml(
+    RFC_PLAINTEXT_EXAMPLE
+  )
+
+  expect(rfcBucketHtmlDocument).toMatchSnapshot()
+
+  expect(rfcBucketHtmlDocument?.tableOfContents).toBeTruthy()
 })
 
-test(`processRfcBucketHtml(${RFC_WITH_HTML}) RFC with TOC`, async () => {
-  const rfcBucketHtmlDocument = await processRfcBucketHtml(RFC_WITH_HTML)
+test(`processRfcBucketHtml(${RFC_XML2RFC_EXAMPLE}) RFC with TOC`, async () => {
+  const rfcBucketHtmlDocument = await processRfcBucketHtml(RFC_XML2RFC_EXAMPLE)
   expect(rfcBucketHtmlDocument).toMatchSnapshot()
-  expect(rfcBucketHtmlDocument.tableOfContents).toBeTruthy()
+  expect(rfcBucketHtmlDocument?.tableOfContents).toBeTruthy()
 })

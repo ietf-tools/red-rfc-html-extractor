@@ -1,22 +1,17 @@
-import { getDOMParser, isHtmlElement, isTextNode } from './dom.ts'
-import { blankRfcCommon } from './rfc.ts'
-import type { RfcCommon, RfcEditorToc, RfcBucketHtmlDocument } from './rfc.ts'
+import { getInnerText, isHtmlElement } from '../dom.ts'
+import { blankRfcCommon } from '../rfc.ts'
+import type { RfcEditorToc } from '../rfc.ts'
+import type { RfcAndToc } from './index.ts'
 
-export const rfcBucketHtmlToRfcDocument = async (
-  rfcBucketHtml: string
-): Promise<RfcBucketHtmlDocument> => {
-  const parser = await getDOMParser()
-  const dom = parser.parseFromString(rfcBucketHtml, 'text/html')
+type TocSections = RfcEditorToc['sections']
+type TocSection = TocSections[number]
+type TocLink = NonNullable<TocSection['links']>[number]
 
-  let tableOfContents: RfcEditorToc | undefined
-
-  const rfc: RfcCommon = {
-    ...blankRfcCommon
-  }
-
-  // Parse useful stuff from <head>
-  const headNodes = Array.from(dom.head.childNodes)
-  headNodes.forEach((node) => {
+export const parseXml2RfcHead = (
+  head: Document['head'],
+  rfcAndToc: RfcAndToc
+): void => {
+  head.childNodes.forEach((node) => {
     if (isHtmlElement(node)) {
       let name: string | null,
         content: string | null,
@@ -30,23 +25,26 @@ export const rfcBucketHtmlToRfcDocument = async (
           if (content) {
             switch (name) {
               case 'author':
-                rfc.authors.push({
+                if (!rfcAndToc.rfc.authors) {
+                  rfcAndToc.rfc.authors = []
+                }
+                rfcAndToc.rfc.authors.push({
                   name: content
                 })
                 break
               case 'description':
-                rfc.abstract = content
+                rfcAndToc.rfc.abstract = content
                 break
               case 'rfc.number':
-                if (rfc.number === blankRfcCommon.number) {
-                  rfc.number = parseInt(content, 10)
+                if (rfcAndToc.rfc.number === blankRfcCommon.number) {
+                  rfcAndToc.rfc.number = parseInt(content, 10)
                 }
                 break
               case 'keyword':
-                if (rfc.keywords === undefined) {
-                  rfc.keywords = []
+                if (rfcAndToc.rfc.keywords === undefined) {
+                  rfcAndToc.rfc.keywords = []
                 }
-                rfc.keywords.push(content)
+                rfcAndToc.rfc.keywords.push(content)
                 break
             }
           }
@@ -60,17 +58,17 @@ export const rfcBucketHtmlToRfcDocument = async (
           href = node.getAttribute('href')
           if (href && rel) {
             if (rel === 'alternate') {
-              if (rfc.identifiers === undefined) {
-                rfc.identifiers = []
+              if (rfcAndToc.rfc.identifiers === undefined) {
+                rfcAndToc.rfc.identifiers = []
               }
 
               if (href.includes('doi.org')) {
-                rfc.identifiers.push({
+                rfcAndToc.rfc.identifiers.push({
                   type: 'doi',
                   value: href
                 })
               } else if (href.includes('urn:issn:')) {
-                rfc.identifiers.push({
+                rfcAndToc.rfc.identifiers.push({
                   type: 'issn',
                   value: href
                 })
@@ -81,27 +79,26 @@ export const rfcBucketHtmlToRfcDocument = async (
       }
     }
   })
+}
 
-  // Parse useful stuff from <body>
-  const bodyNodes = Array.from(dom.body.childNodes)
-  const rfcDocument = bodyNodes.filter((node) => {
+export const parseXml2RfcBody = (
+  body: Document['body'],
+  rfcAndToc: RfcAndToc
+): void => {
+  body.childNodes.forEach((node) => {
     if (isHtmlElement(node)) {
-      switch (node.nodeName.toLowerCase()) {
-        case 'script':
-          return false
-        case 'table':
-          if (node.classList.contains('ears')) {
-            return false
-          }
-          break
-      }
-
-      if (node.id === 'rfcnum' && rfc.number === blankRfcCommon.number) {
-        rfc.number = parseInt(node.innerText.replace(/[^0-9]/gi, ''), 10)
+      if (
+        node.id === 'rfcnum' &&
+        rfcAndToc.rfc.number === blankRfcCommon.number
+      ) {
+        rfcAndToc.rfc.number = parseInt(
+          node.innerText.replace(/[^0-9]/gi, ''),
+          10
+        )
       } else if (node.id === 'title') {
-        rfc.title = node.innerText
+        rfcAndToc.rfc.title = node.innerText
       } else if (node.id === 'toc') {
-        tableOfContents = parseRfcBucketHtmlToc(node)
+        rfcAndToc.tableOfContents = parseXml2RfcToc(node)
       }
 
       const idsToRemove = ['toc', 'external-metadata', 'internal-metadata']
@@ -111,30 +108,19 @@ export const rfcBucketHtmlToRfcDocument = async (
     }
     return true
   })
-
-  const documentHtml = rfcDocument
-    .map((node): string => {
-      if (isHtmlElement(node)) {
-        return node.outerHTML
-      } else if (isTextNode(node)) {
-        return node.textContent ?? ''
-      }
-      return ''
-    })
-    .join('')
-    .trim()
-
-  return {
-    rfc,
-    tableOfContents,
-    documentHtml
-  }
 }
 
-type TocSections = RfcEditorToc['sections']
-type TocSection = TocSections[number]
+const parseXml2RfcToc = (toc: HTMLElement): RfcEditorToc => {
+  const isTocSection = (
+    maybeTocSection?: TocSection
+  ): maybeTocSection is TocSection => {
+    return Boolean(
+      maybeTocSection &&
+        typeof maybeTocSection === 'object' &&
+        'links' in maybeTocSection
+    )
+  }
 
-const parseRfcBucketHtmlToc = (toc: HTMLElement): RfcEditorToc => {
   const walk = (node: Node): TocSection | undefined => {
     if (isHtmlElement(node)) {
       if (node.nodeName.toLowerCase() === 'li') {
@@ -172,7 +158,7 @@ const parseRfcBucketHtmlToc = (toc: HTMLElement): RfcEditorToc => {
               })
             }
           })
-          .filter((link): link is TocSection['links'][number] => {
+          .filter((link): link is TocLink => {
             return !!link
           })
 
@@ -222,38 +208,4 @@ const parseRfcBucketHtmlToc = (toc: HTMLElement): RfcEditorToc => {
     title: 'Table of Contents',
     sections
   }
-}
-
-export const isTocSection = (
-  maybeTocSection?: TocSection
-): maybeTocSection is TocSection => {
-  return Boolean(
-    maybeTocSection &&
-      typeof maybeTocSection === 'object' &&
-      'links' in maybeTocSection
-  )
-}
-
-export const getInnerText = (element: HTMLElement): string => {
-  return Array.from(element.childNodes)
-    .map((node) => {
-      if (isHtmlElement(node)) {
-        return getInnerText(node)
-      } else if (isTextNode(node)) {
-        return node.textContent
-      }
-      return ''
-    })
-    .join('')
-}
-
-export const fetchSourceRfcHtml = async (
-  rfcNumber: number
-): Promise<string> => {
-  const url = `https://www.rfc-editor.org/rfc-neue/rfc${rfcNumber}.html`
-  const response = await fetch(url)
-  if (!response.ok) {
-    throw Error(`Unable to fetch ${url}: ${response.status} ${response.statusText}`)
-  }
-  return response.text()
 }
