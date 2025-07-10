@@ -42,3 +42,16 @@ export const isHtmlElement = (
 
 export const isTextNode = (maybeText: unknown): maybeText is Text =>
   getNodeType(maybeText) === W3CDOM_NODETYPE_TEXT
+
+export const getInnerText = (element: HTMLElement): string => {
+  return Array.from(element.childNodes)
+    .map((node) => {
+      if (isHtmlElement(node)) {
+        return getInnerText(node)
+      } else if (isTextNode(node)) {
+        return node.textContent
+      }
+      return ''
+    })
+    .join('')
+}
