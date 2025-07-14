@@ -7,6 +7,7 @@ type TocSections = RfcEditorToc['sections']
 type TocSection = TocSections[number]
 type TocLink = NonNullable<TocSection['links']>[number]
 
+
 export const parsePlaintextHead = (
   head: Document['head'],
   rfcAndToc: RfcAndToc
@@ -113,7 +114,10 @@ const parsePlaintextToc = (
   body: Document['body'],
   rfcAndToc: RfcAndToc
 ): void => {
-  // Derived from https://github.com/ietf-tools/datatracker/blob/2bf633bf70c40b9cb6baf428901615a0403e1ea5/ietf/static/js/document_html.js#L44
+  //
+  // Derived from
+  // https://datatracker.ietf.org/doc/html/rfc2000
+  // https://github.com/ietf-tools/datatracker/blob/2bf633bf70c40b9cb6baf428901615a0403e1ea5/ietf/static/js/document_html.js#L44
 
   function get_level(el: HTMLElement): number {
     let h: string | undefined
@@ -217,5 +221,28 @@ const parsePlaintextToc = (
       }
       last.sections.push(newSection)
     }
+  })
+}
+
+export const getPlaintextRfcDocument = (dom: Document): Node[] => {
+  const tocSelector = 'h2, h3, h4, h5, h6, .h2, .h3, .h4, .h5, .h6'
+
+  const headings = Array.from(
+    dom.body.querySelectorAll<HTMLElement>(tocSelector)
+  )
+
+  console.log(
+    'ids:',
+    headings.map((heading) => heading.id)
+  )
+
+  return Array.from(dom.body.childNodes).filter((node) => {
+    if (isHtmlElement(node)) {
+      switch (node.nodeName.toLowerCase()) {
+        case 'script':
+          return false
+      }
+    }
+    return true
   })
 }

@@ -7,6 +7,7 @@ type TocSections = RfcEditorToc['sections']
 type TocSection = TocSections[number]
 type TocLink = NonNullable<TocSection['links']>[number]
 
+
 export const parseXml2RfcHead = (
   head: Document['head'],
   rfcAndToc: RfcAndToc
@@ -208,4 +209,34 @@ const parseXml2RfcToc = (toc: HTMLElement): RfcEditorToc => {
     title: 'Table of Contents',
     sections
   }
+}
+
+export const getXml2RfcRfcDocument = (dom: Document): Node[] => {
+  return Array.from(dom.body.childNodes).filter((node) => {
+    if (isHtmlElement(node)) {
+      switch (node.nodeName.toLowerCase()) {
+        case 'script':
+          return false
+        case 'table':
+          if (node.classList.contains('ears')) {
+            return false
+          }
+          break
+      }
+      const idsToRemove = [
+        'toc',
+        'external-metadata',
+        'internal-metadata',
+        'rfcnum',
+        'title',
+        'section-abstract'
+        // 'status-of-memo',
+        // 'copyright'
+      ]
+      if (idsToRemove.includes(node.id)) {
+        return false
+      }
+    }
+    return true
+  })
 }

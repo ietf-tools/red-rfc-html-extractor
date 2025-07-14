@@ -8,8 +8,8 @@ import { getDOMParser, isHtmlElement, isTextNode } from '../dom.ts'
 import { blankRfcCommon } from '../rfc.ts'
 import type { RfcCommon, RfcBucketHtmlDocument, RfcEditorToc } from '../rfc.ts'
 import { assertNever } from '../typescript.ts'
-import { parsePlaintextBody, parsePlaintextHead } from './plaintext.ts'
-import { parseXml2RfcBody, parseXml2RfcHead } from './xml2rfc.ts'
+import { getPlaintextRfcDocument, parsePlaintextBody, parsePlaintextHead } from './plaintext.ts'
+import { getXml2RfcRfcDocument, parseXml2RfcBody, parseXml2RfcHead } from './xml2rfc.ts'
 
 export const fetchSourceRfcHtml = async (
   rfcNumber: number
@@ -17,7 +17,9 @@ export const fetchSourceRfcHtml = async (
   const url = `https://www.rfc-editor.org/rfc-neue/rfc${rfcNumber}.html`
   const response = await fetch(url)
   if (!response.ok) {
-    throw Error(`Unable to fetch ${url}: ${response.status} ${response.statusText}`)
+    throw Error(
+      `Unable to fetch ${url}: ${response.status} ${response.statusText}`
+    )
   }
   return response.text()
 }
@@ -48,39 +50,12 @@ export const rfcBucketHtmlToRfcDocument = async (
     case 'plaintext':
       parsePlaintextHead(dom.head, rfcAndToc)
       parsePlaintextBody(dom.body, rfcAndToc)
-
-      rfcDocument = Array.from(dom.body.childNodes).filter((node) => {
-        if (isHtmlElement(node)) {
-          switch (node.nodeName.toLowerCase()) {
-            case 'script':
-              return false
-          }
-        }
-        return true
-      })
+      rfcDocument = getPlaintextRfcDocument(dom)
       break
     case 'xml2rfc':
       parseXml2RfcHead(dom.head, rfcAndToc)
       parseXml2RfcBody(dom.body, rfcAndToc)
-
-      rfcDocument = Array.from(dom.body.childNodes).filter((node) => {
-        if (isHtmlElement(node)) {
-          switch (node.nodeName.toLowerCase()) {
-            case 'script':
-              return false
-            case 'table':
-              if (node.classList.contains('ears')) {
-                return false
-              }
-              break
-          }
-          const idsToRemove = ['toc', 'external-metadata', 'internal-metadata']
-          if (idsToRemove.includes(node.id)) {
-            return false
-          }
-        }
-        return true
-      })
+      rfcDocument = getXml2RfcRfcDocument(dom)
       break
     default:
       assertNever(documentHtmlType)
@@ -113,7 +88,7 @@ export const rfcBucketHtmlFilenameBuilder = (rfcNumber: number) =>
 const sniffRfcBucketHtmlType = (
   dom: Document
 ): RfcBucketHtmlDocument['documentHtmlType'] => {
-  const isPlaintext = dom.querySelector('pre.newpage')
+  const isPlaintext = dom.querySelector('body > pre')
   const generator = dom.querySelector('meta[name=generator]')
 
   if (generator) {
