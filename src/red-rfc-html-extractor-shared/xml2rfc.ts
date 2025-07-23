@@ -225,11 +225,12 @@ export const getXml2RfcRfcDocument = (dom: Document): Node[] => {
       }
       const idsToRemove = [
         'toc',
+        'rfcnum',
+        'title',        
         'external-metadata',
         'internal-metadata',
-        'rfcnum',
-        'title',
-        'section-abstract'
+        
+        // 'section-abstract'
         // 'status-of-memo',
         // 'copyright'
       ]
