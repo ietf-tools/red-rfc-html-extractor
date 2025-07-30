@@ -1,6 +1,7 @@
 import {
   elementAttributesToObject,
   getDOMParser,
+  isCommentNode,
   isHtmlElement,
   isTextNode
 } from '../dom.ts'
@@ -9,6 +10,7 @@ import type {
   NodePojo,
 } from '../rfc-validators.ts'
 import {
+  isNodePojo,
   RfcBucketHtmlDocumentSchema
 } from '../rfc-validators.ts'
 import { blankRfcCommon } from '../rfc.ts'
@@ -122,7 +124,7 @@ const sniffRfcBucketHtmlType = (
 }
 
 const rfcDocumentToPojo = (rfcDocument: Node[]): DocumentPojo => {
-  const walk = (node: Node): NodePojo => {
+  const walk = (node: Node): NodePojo | undefined => {
     if (isHtmlElement(node)) {
       return {
         type: 'Element',
@@ -131,18 +133,20 @@ const rfcDocumentToPojo = (rfcDocument: Node[]): DocumentPojo => {
         // 2) the html element nodeName
         nodeName: node.dataset.component ?? node.nodeName.toLowerCase(),
         attributes: elementAttributesToObject(node.attributes),
-        children: Array.from(node.childNodes).map(walk)
+        children: Array.from(node.childNodes).map(walk).filter(isNodePojo)
       }
     } else if (isTextNode(node)) {
       return {
         type: 'Text',
         textContent: node.textContent ?? ''
       }
+    }else if (isCommentNode(node)) {
+      return undefined
     }
     const errorTitle = `rfcDocumentToPojo: Unsupported nodeType ${node.nodeType}`
     console.error(errorTitle, node)
     throw Error(`${errorTitle}. See console for details.`)
   }
 
-  return rfcDocument.map(walk)
+  return rfcDocument.map(walk).filter(isNodePojo)
 }

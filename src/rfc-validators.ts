@@ -184,7 +184,7 @@ const NodeSchema = z.union([ElementSchema, TextSchema])
 // pojo = plain old javascript object, rather than an instanceof Node class
 export type NodePojo = z.infer<typeof NodeSchema>
 
-// pojo = plain old javascript object, rather than an instanceof Node class
+// pojo = plain old javascript object, rather than an instanceof Document class
 export type DocumentPojo = NodePojo[]
 
 /**
@@ -199,3 +199,13 @@ export const RfcBucketHtmlDocumentSchema = z.object({
 })
 
 export type RfcBucketHtmlDocument = z.infer<typeof RfcBucketHtmlDocumentSchema>
+
+export const isNodePojo = (maybeNode: unknown): maybeNode is NodePojo => {
+  return (
+    !!maybeNode &&
+    typeof maybeNode === 'object' &&
+    'type' in maybeNode &&
+    typeof maybeNode.type === 'string' &&
+    ['Element', 'Text'].includes(maybeNode.type)
+  )
+}

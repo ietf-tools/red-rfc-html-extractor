@@ -30,6 +30,7 @@ export const getNodeType = (maybeNode: unknown): number | undefined => {
 
 const W3CDOM_NODETYPE_ELEMENT = 1
 const W3CDOM_NODETYPE_TEXT = 3
+const W3CDOM_NODETYPE_COMMENT = 8
 
 /**
  * Technically just checks whether it's an Element not an HTMLElement
@@ -42,6 +43,9 @@ export const isHtmlElement = (
 
 export const isTextNode = (maybeText: unknown): maybeText is Text =>
   getNodeType(maybeText) === W3CDOM_NODETYPE_TEXT
+
+export const isCommentNode = (maybeComment: unknown): maybeComment is Comment =>
+  getNodeType(maybeComment) === W3CDOM_NODETYPE_COMMENT
 
 export const elementAttributesToObject = (
   attributes: NamedNodeMap
