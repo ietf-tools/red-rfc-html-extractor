@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3"
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 
 const s3Cli = new S3Client({
   endpoint: process.env.S3_OUT_ENDPOINT ?? '',
@@ -11,10 +11,15 @@ const s3Cli = new S3Client({
   responseChecksumValidation: 'WHEN_REQUIRED'
 })
 
-export async function saveToS3 (rfcNumber: number, contents: string): Promise<void> {
-  await s3Cli.send(new PutObjectCommand({
-    Bucket: process.env.S3_OUT_BUCKET,
-    Key: `rfc/${rfcNumber}.json`,
-    Body: contents
-  }))
+export async function saveToS3(
+  rfcNumber: number,
+  contents: string
+): Promise<void> {
+  await s3Cli.send(
+    new PutObjectCommand({
+      Bucket: process.env.S3_OUT_BUCKET,
+      Key: `rfc/${rfcNumber}.json`,
+      Body: contents
+    })
+  )
 }

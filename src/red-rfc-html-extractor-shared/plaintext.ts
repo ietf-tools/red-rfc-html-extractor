@@ -7,7 +7,6 @@ type TocSections = RfcEditorToc['sections']
 type TocSection = TocSections[number]
 type TocLink = NonNullable<TocSection['links']>[number]
 
-
 export const parsePlaintextHead = (
   head: Document['head'],
   rfcAndToc: RfcAndToc
@@ -234,4 +233,20 @@ export const getPlaintextRfcDocument = (dom: Document): Node[] => {
     }
     return true
   })
+}
+
+export const getPlaintextMaxLineLength = (dom: Document): number => {
+  const DEFAULT_MAX_LINE_LENGTH = 50
+
+  const pres = Array.from(dom.body.querySelectorAll<HTMLElement>('pre'))
+  return pres.reduce(
+    (prevMaxLineLength, pre) =>
+      Math.max(
+        prevMaxLineLength,
+        ...getInnerText(pre)
+          .split('\n')
+          .map((line) => line.length)
+      ),
+    DEFAULT_MAX_LINE_LENGTH
+  )
 }

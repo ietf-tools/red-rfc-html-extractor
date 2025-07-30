@@ -7,7 +7,6 @@ type TocSections = RfcEditorToc['sections']
 type TocSection = TocSections[number]
 type TocLink = NonNullable<TocSection['links']>[number]
 
-
 export const parseXml2RfcHead = (
   head: Document['head'],
   rfcAndToc: RfcAndToc
@@ -97,11 +96,10 @@ export const parseXml2RfcBody = (
           10
         )
       } else if (node.id === 'title') {
-        rfcAndToc.rfc.title = node.innerText
+        rfcAndToc.rfc.title = getInnerText(node)
       } else if (node.id === 'toc') {
         rfcAndToc.tableOfContents = parseXml2RfcToc(node)
       }
-
       const idsToRemove = ['toc', 'external-metadata', 'internal-metadata']
       if (idsToRemove.includes(node.id)) {
         return false
@@ -212,7 +210,7 @@ const parseXml2RfcToc = (toc: HTMLElement): RfcEditorToc => {
 }
 
 export const getXml2RfcRfcDocument = (dom: Document): Node[] => {
-  return Array.from(dom.body.childNodes).filter((node) => {
+  const nodes = Array.from(dom.body.childNodes).filter((node) => {
     if (isHtmlElement(node)) {
       switch (node.nodeName.toLowerCase()) {
         case 'script':
@@ -226,10 +224,10 @@ export const getXml2RfcRfcDocument = (dom: Document): Node[] => {
       const idsToRemove = [
         'toc',
         'rfcnum',
-        'title',        
+        'title',
         'external-metadata',
-        'internal-metadata',
-        
+        'internal-metadata'
+
         // 'section-abstract'
         // 'status-of-memo',
         // 'copyright'
@@ -240,4 +238,70 @@ export const getXml2RfcRfcDocument = (dom: Document): Node[] => {
     }
     return true
   })
+
+  return nodes.map(fixNodeForMobile)
+}
+
+/**
+ * The HTML needs minor changes to ensure mobile rendering on Red.
+ *
+ * Tailwind's grepper won't be able to see these CSS classes so we rely on
+ * the same classes already existing in the generated CSS bundle (because they
+ * were already used elsewhere, in Red).
+ *
+ * If using unpopular classes this would need a different approach.
+ */
+const fixNodeForMobile = (node: Node): Node => {
+  if (isHtmlElement(node)) {
+    const tagName = node.tagName.toLowerCase()
+    const wrapper = node.ownerDocument.createElement('div')
+    switch (tagName) {
+      case 'pre':
+      case 'table':
+        // <pre>s can be too wide, so we wrap them to make a scrollable area
+        wrapper.classList.add(
+          // see above docstring about Tailwind classes
+          'w-full',
+          'max-w-screen',
+          'overflow-x-auto'
+        )
+        wrapper.setAttribute('data-component', 'HorizontalScrollable')
+        wrapper.appendChild(node)
+        return wrapper
+    }
+    const newChildren = Array.from(node.childNodes).map(fixNodeForMobile)
+    node.replaceChildren(...newChildren)
+    return node
+  }
+  return node
+}
+
+/**
+ * Unlike plaintext RFCs these HTML RFCs aren't entirely <pre>formatted text
+ * but they can include preformatted sections (eg ASCII art) that should be
+ * sized, so we still calculate the max line length of <pre>s within.
+ */
+export const getXml2RfcMaxLineLength = (dom: Document): number => {
+  /**
+   * The DEFAULT_MAX_LINE_LENGTH is less than the plaintext equivalent.
+   *
+   * This is because HTML RFC <pre> sections might be just ASCII art, and as such there's
+   * without any
+   * particular width conventions. Unlike plaintext RFCs we can't assume <pre> sections within
+   * HTML are 80 chars by default. , so we'll
+   * start off with a smaller number than 80.
+   */
+  const DEFAULT_MAX_LINE_LENGTH = 40
+
+  const pres = Array.from(dom.body.querySelectorAll<HTMLElement>('pre'))
+  return pres.reduce(
+    (prevMaxLineLength, pre) =>
+      Math.max(
+        prevMaxLineLength,
+        ...getInnerText(pre)
+          .split('\n')
+          .map((line) => line.length)
+      ),
+    DEFAULT_MAX_LINE_LENGTH
+  )
 }

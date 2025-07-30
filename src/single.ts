@@ -1,4 +1,7 @@
-import { fetchSourceRfcHtml, rfcBucketHtmlToRfcDocument } from './red-rfc-html-extractor-shared/index.ts'
+import {
+  fetchSourceRfcHtml,
+  rfcBucketHtmlToRfcDocument
+} from './red-rfc-html-extractor-shared/index.ts'
 import { saveToS3 } from './s3.ts'
 
 const main = async (rfcNumber: number): Promise<void> => {
@@ -13,12 +16,16 @@ const main = async (rfcNumber: number): Promise<void> => {
       throw new Error(`Failed to fetch RFC ${rfcNumber} html.`)
     }
   } catch (err) {
-    console.warn(`Failed to process RFC ${rfcNumber}: ${(err as Error).message}`)
+    console.warn(
+      `Failed to process RFC ${rfcNumber}: ${(err as Error).message}`
+    )
   }
 }
 
 if (!process.argv[2]) {
-  throw Error(`Script requires RFC Number arg but argv was ${JSON.stringify(process.argv)}`)
+  throw Error(
+    `Script requires RFC Number arg but argv was ${JSON.stringify(process.argv)}`
+  )
 }
 
 main(parseInt(process.argv[2], 10))

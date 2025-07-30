@@ -43,6 +43,17 @@ export const isHtmlElement = (
 export const isTextNode = (maybeText: unknown): maybeText is Text =>
   getNodeType(maybeText) === W3CDOM_NODETYPE_TEXT
 
+export const elementAttributesToObject = (
+  attributes: NamedNodeMap
+): Record<string, string> =>
+  Array.from(attributes).reduce(
+    (acc, attribute) => {
+      acc[attribute.name] = attribute.value
+      return acc
+    },
+    {} as Record<string, string>
+  )
+
 export const getInnerText = (element: HTMLElement): string => {
   return Array.from(element.childNodes)
     .map((node) => {
