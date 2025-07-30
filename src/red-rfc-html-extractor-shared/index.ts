@@ -4,9 +4,11 @@ import {
   isHtmlElement,
   isTextNode
 } from '../dom.ts'
-import {
+import type {
   DocumentPojo,
   NodePojo,
+} from '../rfc-validators.ts'
+import {
   RfcBucketHtmlDocumentSchema
 } from '../rfc-validators.ts'
 import { blankRfcCommon } from '../rfc.ts'
