@@ -1,4 +1,5 @@
-import { getInnerText, isHtmlElement } from '../dom.ts'
+import { getDOMParser, getInnerText, isHtmlElement } from '../dom.ts'
+import { MaxPreformattedLineLengthSchemaType } from '../rfc-validators.ts'
 import { blankRfcCommon } from '../rfc.ts'
 import type { RfcEditorToc } from '../rfc.ts'
 import type { RfcAndToc } from './index.ts'
@@ -281,7 +282,9 @@ const fixNodeForMobile = (node: Node): Node => {
  * but they can include preformatted sections (eg ASCII art) that should be
  * sized, so we still calculate the max line length of <pre>s within.
  */
-export const getXml2RfcMaxLineLength = (dom: Document): number => {
+export const getXml2RfcMaxLineLength = async (
+  dom: Document
+): Promise<MaxPreformattedLineLengthSchemaType> => {
   /**
    * The DEFAULT_MAX_LINE_LENGTH is less than the plaintext equivalent.
    *
@@ -294,7 +297,7 @@ export const getXml2RfcMaxLineLength = (dom: Document): number => {
   const DEFAULT_MAX_LINE_LENGTH = 40
 
   const pres = Array.from(dom.body.querySelectorAll<HTMLElement>('pre'))
-  return pres.reduce(
+  const max = pres.reduce(
     (prevMaxLineLength, pre) =>
       Math.max(
         prevMaxLineLength,
@@ -304,4 +307,28 @@ export const getXml2RfcMaxLineLength = (dom: Document): number => {
       ),
     DEFAULT_MAX_LINE_LENGTH
   )
+
+  const domParser = await getDOMParser()
+
+  const maxWithAnchorSuffix = pres.reduce(
+    (prevMaxLineLength, pre) =>
+      Math.max(
+        prevMaxLineLength,
+        ...pre.innerHTML.split('\n').map((lineHTML) => {
+          const lineDom = domParser.parseFromString(
+            `<div>${lineHTML}</div>`,
+            'text/html'
+          )
+          const innerText = getInnerText(lineDom.documentElement)
+          const anchors = lineDom.querySelectorAll('a')
+          return innerText.length + anchors.length
+        })
+      ),
+    DEFAULT_MAX_LINE_LENGTH
+  )
+
+  return {
+    max,
+    maxWithAnchorSuffix
+  }
 }

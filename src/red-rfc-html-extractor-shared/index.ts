@@ -7,6 +7,7 @@ import {
 } from '../dom.ts'
 import type {
   DocumentPojo,
+  MaxPreformattedLineLengthSchemaType,
   NodePojo,
 } from '../rfc-validators.ts'
 import {
@@ -61,7 +62,10 @@ export const rfcBucketHtmlToRfcDocument = async (
 
   const documentHtmlType = sniffRfcBucketHtmlType(dom)
 
-  let maxPreformattedLineLength = 80
+  let maxPreformattedLineLength: MaxPreformattedLineLengthSchemaType = {
+    max: 80,
+    maxWithAnchorSuffix: 80,
+  }
 
   let rfcDocument: Node[] = []
 
@@ -70,13 +74,13 @@ export const rfcBucketHtmlToRfcDocument = async (
       parsePlaintextHead(dom.head, rfcAndToc)
       parsePlaintextBody(dom.body, rfcAndToc)
       rfcDocument = getPlaintextRfcDocument(dom)
-      maxPreformattedLineLength = getPlaintextMaxLineLength(dom)
+      maxPreformattedLineLength = await getPlaintextMaxLineLength(dom)
       break
     case 'xml2rfc':
       parseXml2RfcHead(dom.head, rfcAndToc)
       parseXml2RfcBody(dom.body, rfcAndToc)
       rfcDocument = getXml2RfcRfcDocument(dom)
-      maxPreformattedLineLength = getXml2RfcMaxLineLength(dom)
+      maxPreformattedLineLength = await getXml2RfcMaxLineLength(dom)
       break
     default:
       assertNever(documentHtmlType)
@@ -88,7 +92,7 @@ export const rfcBucketHtmlToRfcDocument = async (
     tableOfContents: rfcAndToc.tableOfContents,
     documentHtmlType,
     documentHtmlObj: rfcDocumentToPojo(rfcDocument),
-    maxPreformattedLineLength
+    maxPreformattedLineLength,
   }
 
   /**

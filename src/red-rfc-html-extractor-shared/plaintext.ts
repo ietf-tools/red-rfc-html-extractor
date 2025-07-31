@@ -1,4 +1,5 @@
-import { getInnerText, isHtmlElement } from '../dom.ts'
+import { getInnerText, isHtmlElement, getDOMParser } from '../dom.ts'
+import { MaxPreformattedLineLengthSchemaType } from '../rfc-validators.ts'
 import { blankRfcCommon } from '../rfc.ts'
 import type { RfcEditorToc } from '../rfc.ts'
 import type { RfcAndToc } from './index.ts'
@@ -235,11 +236,13 @@ export const getPlaintextRfcDocument = (dom: Document): Node[] => {
   })
 }
 
-export const getPlaintextMaxLineLength = (dom: Document): number => {
+export const getPlaintextMaxLineLength = async (
+  dom: Document
+): Promise<MaxPreformattedLineLengthSchemaType> => {
   const DEFAULT_MAX_LINE_LENGTH = 50
 
   const pres = Array.from(dom.body.querySelectorAll<HTMLElement>('pre'))
-  return pres.reduce(
+  const max = pres.reduce(
     (prevMaxLineLength, pre) =>
       Math.max(
         prevMaxLineLength,
@@ -249,4 +252,28 @@ export const getPlaintextMaxLineLength = (dom: Document): number => {
       ),
     DEFAULT_MAX_LINE_LENGTH
   )
+
+  const domParser = await getDOMParser()
+
+  const maxWithAnchorSuffix = pres.reduce(
+    (prevMaxLineLength, pre) =>
+      Math.max(
+        prevMaxLineLength,
+        ...pre.innerHTML.split('\n').map((lineHTML) => {
+          const lineDom = domParser.parseFromString(
+            `<div>${lineHTML}</div>`,
+            'text/html'
+          )
+          const innerText = getInnerText(lineDom.documentElement)
+          const anchors = lineDom.querySelectorAll('a')
+          return innerText.length + anchors.length
+        })
+      ),
+    DEFAULT_MAX_LINE_LENGTH
+  )
+
+  return {
+    max,
+    maxWithAnchorSuffix
+  }
 }
