@@ -91,7 +91,16 @@ export const rfcBucketHtmlToRfcDocument = async (
     maxPreformattedLineLength
   }
 
-  const validationResult = RfcBucketHtmlDocumentSchema.safeParse(response)
+  /**
+   * Serializing to JSON and parsing again can result in an cloned object with missing keys, see
+   * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#description
+   * eg, an object's key's value of `undefined` would have the object key removed, which could affect schema validation.
+   * This particularly affects the Red client which will parse JSON and validate against the schema.
+   * So we will roundtrip through JSON to simulate a realistic object that should pass schema validation.
+   */
+  const responseRoundTrippedThroughJSON = JSON.parse(JSON.stringify(response))
+
+  const validationResult = RfcBucketHtmlDocumentSchema.safeParse(responseRoundTrippedThroughJSON)
 
   if (validationResult.error) {
     const errorTitle = `Failed to convert ${rfcId} due to validation error:`

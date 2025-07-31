@@ -1,3 +1,11 @@
+/**
+ * This file should be copied between these two repos
+ * https://github.com/ietf-tools/red/blob/main/client/utilities/rfc-validators.ts
+ * https://github.com/ietf-tools/red-rfc-html-extractor/blob/main/src/rfc-validators.ts
+ * to ensure there's a shared schema definition between repos for some JSON files.
+ *
+ * FIXME: make this code a shared dependency (ie, NPM package)
+ */
 import { z } from 'zod'
 
 const DocumentHtmlTypeSchema = z.union([
