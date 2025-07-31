@@ -308,6 +308,8 @@ export const getXml2RfcMaxLineLength = async (
     DEFAULT_MAX_LINE_LENGTH
   )
 
+  const ANCHOR_SUFFIX_CHAR_WIDTH = 3
+
   const domParser = await getDOMParser()
 
   const maxWithAnchorSuffix = pres.reduce(
@@ -321,7 +323,7 @@ export const getXml2RfcMaxLineLength = async (
           )
           const innerText = getInnerText(lineDom.documentElement)
           const anchors = lineDom.querySelectorAll('a')
-          return innerText.length + anchors.length
+          return innerText.length + (anchors.length * ANCHOR_SUFFIX_CHAR_WIDTH)
         })
       ),
     DEFAULT_MAX_LINE_LENGTH
