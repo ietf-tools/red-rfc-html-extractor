@@ -1,5 +1,5 @@
 import { getInnerText, isHtmlElement, getDOMParser } from '../dom.ts'
-import { MaxPreformattedLineLengthSchemaType } from '../rfc-validators.ts'
+import type { MaxPreformattedLineLengthSchemaType } from '../rfc-validators.ts'
 import { blankRfcCommon } from '../rfc.ts'
 import type { RfcEditorToc } from '../rfc.ts'
 import type { RfcAndToc } from './index.ts'

@@ -195,7 +195,7 @@ export type NodePojo = z.infer<typeof NodeSchema>
 // pojo = plain old javascript object, rather than an instanceof Document class
 export type DocumentPojo = NodePojo[]
 
-const MaxPreformattedLineLengthSchema = z.object({
+export const MaxPreformattedLineLengthSchema = z.object({
     max: z.number(),
     maxWithAnchorSuffix: z.number()
 })
