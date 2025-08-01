@@ -191,6 +191,7 @@ const makeRfcEditorProdLinksRelative = (rfcDocument: Node[]): void => {
           ) {
             const newHref = `${url.pathname}${url.search}${url.hash}`
             node.setAttribute('href', newHref)
+            console.log("replace href", JSON.stringify(href), JSON.stringify(newHref))
           }
         }
       }
