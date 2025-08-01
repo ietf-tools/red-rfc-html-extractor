@@ -17,6 +17,7 @@ import {
 import { blankRfcCommon } from '../rfc.ts'
 import type { RfcCommon, RfcBucketHtmlDocument, RfcEditorToc } from '../rfc.ts'
 import { assertNever } from '../typescript.ts'
+import { PUBLIC_SITE } from '../url.ts'
 import {
   getPlaintextMaxLineLength,
   getPlaintextRfcDocument,
@@ -87,6 +88,8 @@ export const rfcBucketHtmlToRfcDocument = async (
       break
   }
 
+  makeRfcEditorProdLinksRelative(rfcDocument)
+
   const response: RfcBucketHtmlDocument = {
     rfc: rfcAndToc.rfc,
     tableOfContents: rfcAndToc.tableOfContents,
@@ -143,7 +146,7 @@ const rfcDocumentToPojo = (rfcDocument: Node[]): DocumentPojo => {
         type: 'Element',
         // the nodeName name is either:
         // 1) the data-component attribute (eg, 'HorizontalScrollable')
-        // 2) the html element nodeName
+        // 2) the html element nodeName (eg 'a' or 'pre')
         nodeName: node.dataset.component ?? node.nodeName.toLowerCase(),
         attributes: elementAttributesToObject(node.attributes),
         children: Array.from(node.childNodes).map(walk).filter(isNodePojo)
@@ -162,4 +165,38 @@ const rfcDocumentToPojo = (rfcDocument: Node[]): DocumentPojo => {
   }
 
   return rfcDocument.map(walk).filter(isNodePojo)
+}
+
+/**
+ * In RFC HTML there are links to prod using absolute URLs (eg)
+ * `https://www.rfc-editor.org/info/rfcN` that should be replaced
+ * with relative URLs `/info/rfcN` so that
+ * 1) the Nuxt SPA nav works on prod,
+ * 2) links on other domains like localhost/staging stay on their
+ *    domain.
+ * 
+ * This mutates the input document to update `<a href>`s.
+ **/
+const makeRfcEditorProdLinksRelative = (rfcDocument: Node[]): void => {
+  const publicSiteUrl = new URL(PUBLIC_SITE)
+  const walk = (node: Node): void => {
+    if (isHtmlElement(node)) {
+      if (node.nodeName.toLowerCase() === 'a') {
+        const href = node.getAttribute('href')
+        if (href) {
+          const url = new URL(href, 'https://example.com')
+          if(
+            url.protocol === publicSiteUrl.protocol &&
+            url.host === publicSiteUrl.host
+          ) {
+            const newHref = `${url.pathname}${url.search}${url.hash}`
+            node.setAttribute('href', newHref)
+            console.log(" - replaceed ", href, newHref)
+          }
+        }
+      }
+      Array.from(node.childNodes).forEach(walk)      
+    }
+  }
+  return rfcDocument.forEach(walk)
 }

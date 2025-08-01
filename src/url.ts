@@ -1,0 +1,1 @@
+export const PUBLIC_SITE = 'https://www.rfc-editor.org'
