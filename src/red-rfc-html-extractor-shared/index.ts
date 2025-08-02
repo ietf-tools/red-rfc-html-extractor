@@ -194,7 +194,9 @@ const convertHrefs = (rfcDocument: Node[], baseUrl: URL): void => {
         const href = node.getAttribute('href')
         if (
           href &&
-          !href.startsWith('#') // don't convert internal links, they're already ok
+          // don't convert hrefs that at are just internal links, but do convert
+          // eg './rfcN.html#section' or './rfcN' etc
+          !href.startsWith('#') 
         ) {
           const url = new URL(href, baseUrl)
           if (
