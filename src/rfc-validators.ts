@@ -196,10 +196,12 @@ export type NodePojo = z.infer<typeof NodeSchema>
 export type DocumentPojo = NodePojo[]
 
 export const MaxPreformattedLineLengthSchema = z.object({
-    max: z.number(),
-    maxWithAnchorSuffix: z.number()
+  max: z.number(),
+  maxWithAnchorSuffix: z.number()
 })
-export type MaxPreformattedLineLengthSchemaType = z.infer<typeof MaxPreformattedLineLengthSchema>
+export type MaxPreformattedLineLengthSchemaType = z.infer<
+  typeof MaxPreformattedLineLengthSchema
+>
 
 /**
  * Bucket JSON schema

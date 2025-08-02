@@ -8,12 +8,9 @@ import {
 import type {
   DocumentPojo,
   MaxPreformattedLineLengthSchemaType,
-  NodePojo,
+  NodePojo
 } from '../rfc-validators.ts'
-import {
-  isNodePojo,
-  RfcBucketHtmlDocumentSchema
-} from '../rfc-validators.ts'
+import { isNodePojo, RfcBucketHtmlDocumentSchema } from '../rfc-validators.ts'
 import { blankRfcCommon } from '../rfc.ts'
 import type { RfcCommon, RfcBucketHtmlDocument, RfcEditorToc } from '../rfc.ts'
 import { assertNever } from '../typescript.ts'
@@ -65,7 +62,7 @@ export const rfcBucketHtmlToRfcDocument = async (
 
   let maxPreformattedLineLength: MaxPreformattedLineLengthSchemaType = {
     max: 80,
-    maxWithAnchorSuffix: 80,
+    maxWithAnchorSuffix: 80
   }
 
   let rfcDocument: Node[] = []
@@ -88,26 +85,29 @@ export const rfcBucketHtmlToRfcDocument = async (
       break
   }
 
-  makeRfcEditorProdLinksRelative(rfcDocument)
+  convertHrefs(rfcDocument)
 
   const response: RfcBucketHtmlDocument = {
     rfc: rfcAndToc.rfc,
     tableOfContents: rfcAndToc.tableOfContents,
     documentHtmlType,
     documentHtmlObj: rfcDocumentToPojo(rfcDocument),
-    maxPreformattedLineLength,
+    maxPreformattedLineLength
   }
 
   /**
-   * Serializing to JSON and parsing again can result in an cloned object with missing keys, see
+   * Serializing to JSON and parsing again ('roundTripped') can result in a different object structure
+   * with missing keys, see
    * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#description
-   * eg, an object's key's value of `undefined` would have the object key removed, which could affect schema validation.
-   * This particularly affects the Red client which will parse JSON and validate against the schema.
-   * So we will roundtrip through JSON to simulate a realistic object that should pass schema validation.
+   * Eg, an object's key's value of `undefined` would have the object key removed by `JSON.stringify()`,
+   * which could affect schema validation.
+   * This is done to simulate how Red will parse JSON and validate against the schema.
    */
   const responseRoundTrippedThroughJSON = JSON.parse(JSON.stringify(response))
 
-  const validationResult = RfcBucketHtmlDocumentSchema.safeParse(responseRoundTrippedThroughJSON)
+  const validationResult = RfcBucketHtmlDocumentSchema.safeParse(
+    responseRoundTrippedThroughJSON
+  )
 
   if (validationResult.error) {
     const errorTitle = `Failed to convert ${rfcId} due to validation error:`
@@ -156,7 +156,7 @@ const rfcDocumentToPojo = (rfcDocument: Node[]): DocumentPojo => {
         type: 'Text',
         textContent: node.textContent ?? ''
       }
-    }else if (isCommentNode(node)) {
+    } else if (isCommentNode(node)) {
       return undefined
     }
     const errorTitle = `rfcDocumentToPojo: Unsupported nodeType ${node.nodeType}`
@@ -168,34 +168,45 @@ const rfcDocumentToPojo = (rfcDocument: Node[]): DocumentPojo => {
 }
 
 /**
- * In RFC HTML there are links to prod using absolute URLs (eg)
- * `https://www.rfc-editor.org/info/rfcN` that should be replaced
- * with relative URLs `/info/rfcN` so that
- * 1) the Nuxt SPA nav works on prod,
- * 2) links on other domains like localhost/staging stay on their
- *    domain.
- * 
- * This mutates the input document to update `<a href>`s.
+ * This function converts link `href`s by mutating the Node(s)
+ *
+ * 1) Many RFCs have relative hrefs of `./rfcN.html` which resolves differently from
+ *    the original `/rfc/rfcN.html` and the new republished path of `/info/rfcN/`
+ *    (regardless of the trailing slash, the `/info/` will make relative hrefs resolve
+ *    differently). Converting the hrefs is very simple as the web standard URL() takes
+ *    a 2nd arg to resolve relative links against, so this function resolves relative
+ *    paths from `./rfcN.html` to `/rfc/rfcN.html`. So they're still relative hrefs but
+ *    relative to the domain, not the path.
+ * 2) Many RFCs have absolute hrefs of `https://www.rfc-editor.org/rfc/rfcN.html` which
+ *    would break Red's Nuxt SPA nav, so we'll convert those to `/rfc/rfcN.html`. This
+ *    also makes these links work on localhost/staging etc.
+ *
+ * TODO: decide whether to convert links from `/rfc/rfcN.html` to `/info/rfcN` so that
+ * users of `/info/` stay in that app rather than browsing bucket HTML.
  **/
-const makeRfcEditorProdLinksRelative = (rfcDocument: Node[]): void => {
+const convertHrefs = (rfcDocument: Node[]): void => {
   const publicSiteUrl = new URL(PUBLIC_SITE)
   const walk = (node: Node): void => {
     if (isHtmlElement(node)) {
       if (node.nodeName.toLowerCase() === 'a') {
         const href = node.getAttribute('href')
         if (href) {
-          const url = new URL(href, 'https://example.com')
-          if(
+          const url = new URL(href, publicSiteUrl)
+          if (
             url.protocol === publicSiteUrl.protocol &&
             url.host === publicSiteUrl.host
           ) {
             const newHref = `${url.pathname}${url.search}${url.hash}`
             node.setAttribute('href', newHref)
-            console.log("replace href", JSON.stringify(href), JSON.stringify(newHref))
+            console.log(
+              ' - replace href',
+              JSON.stringify(href),
+              JSON.stringify(newHref)
+            )
           }
         }
       }
-      Array.from(node.childNodes).forEach(walk)      
+      Array.from(node.childNodes).forEach(walk)
     }
   }
   return rfcDocument.forEach(walk)
