@@ -192,7 +192,10 @@ const convertHrefs = (rfcDocument: Node[], baseUrl: URL): void => {
     if (isHtmlElement(node)) {
       if (node.nodeName.toLowerCase() === 'a') {
         const href = node.getAttribute('href')
-        if (href) {
+        if (
+          href &&
+          !href.startsWith('#') // don't convert internal links, they're already ok
+        ) {
           const url = new URL(href, baseUrl)
           if (
             url.protocol === publicSiteUrl.protocol &&
