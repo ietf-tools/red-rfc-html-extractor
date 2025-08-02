@@ -9,7 +9,7 @@ const main = async (rfcNumber: number): Promise<void> => {
   try {
     const html = await fetchSourceRfcHtml(rfcNumber)
     if (html) {
-      const rfcDoc = await rfcBucketHtmlToRfcDocument(html)
+      const rfcDoc = await rfcBucketHtmlToRfcDocument(html, rfcNumber)
       await saveToS3(rfcNumber, JSON.stringify(rfcDoc))
       console.log(`Pushed RFC ${rfcNumber} to bucket successfully.`)
     } else {

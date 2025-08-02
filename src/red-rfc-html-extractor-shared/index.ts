@@ -48,7 +48,7 @@ export type RfcAndToc = {
 
 export const rfcBucketHtmlToRfcDocument = async (
   rfcBucketHtml: string,
-  rfcId: string
+  rfcNumber: number
 ): Promise<RfcBucketHtmlDocument> => {
   const parser = await getDOMParser()
   const dom = parser.parseFromString(rfcBucketHtml, 'text/html')
@@ -85,7 +85,9 @@ export const rfcBucketHtmlToRfcDocument = async (
       break
   }
 
-  convertHrefs(rfcDocument)
+  const baseUrl = new URL(`/rfc/rfc${rfcNumber}.html`, PUBLIC_SITE)
+
+  convertHrefs(rfcDocument, baseUrl)
 
   const response: RfcBucketHtmlDocument = {
     rfc: rfcAndToc.rfc,
@@ -110,7 +112,7 @@ export const rfcBucketHtmlToRfcDocument = async (
   )
 
   if (validationResult.error) {
-    const errorTitle = `Failed to convert ${rfcId} due to validation error:`
+    const errorTitle = `Failed to convert rfc${rfcNumber} due to validation error:`
     console.log(errorTitle, validationResult.error)
     throw Error(`${errorTitle}. See console for details.`)
   }
@@ -184,14 +186,14 @@ const rfcDocumentToPojo = (rfcDocument: Node[]): DocumentPojo => {
  * TODO: decide whether to convert links from `/rfc/rfcN.html` to `/info/rfcN` so that
  * users of `/info/` stay in that app rather than browsing bucket HTML.
  **/
-const convertHrefs = (rfcDocument: Node[]): void => {
+const convertHrefs = (rfcDocument: Node[], baseUrl: URL): void => {
   const publicSiteUrl = new URL(PUBLIC_SITE)
   const walk = (node: Node): void => {
     if (isHtmlElement(node)) {
       if (node.nodeName.toLowerCase() === 'a') {
         const href = node.getAttribute('href')
         if (href) {
-          const url = new URL(href, publicSiteUrl)
+          const url = new URL(href, baseUrl)
           if (
             url.protocol === publicSiteUrl.protocol &&
             url.host === publicSiteUrl.host

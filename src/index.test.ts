@@ -8,7 +8,7 @@ import {
 const processRfcBucketHtml = async (rfcNumber: number) => {
   const html = await fetchSourceRfcHtml(rfcNumber)
   if (html) {
-    return rfcBucketHtmlToRfcDocument(html)
+    return rfcBucketHtmlToRfcDocument(html, rfcNumber)
   }
 }
 
