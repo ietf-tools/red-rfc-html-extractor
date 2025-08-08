@@ -38,3 +38,11 @@ export const blankRfcCommon: RfcCommon = {
 export type RfcEditorToc = z.infer<typeof TableOfContentsSchema>
 
 export type RfcBucketHtmlDocument = z.infer<typeof RfcBucketHtmlDocumentSchema>
+
+const RFC_REGEX = /(rfc[0-9]+)/i
+
+export const extractHrefRfcPart = (href: string): undefined | string => {
+  const rfcMatch = href.match(RFC_REGEX)
+  if (!rfcMatch) return undefined
+  return rfcMatch[1]  
+}

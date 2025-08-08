@@ -11,7 +11,7 @@ import type {
   NodePojo
 } from '../rfc-validators.ts'
 import { isNodePojo, RfcBucketHtmlDocumentSchema } from '../rfc-validators.ts'
-import { blankRfcCommon } from '../rfc.ts'
+import { blankRfcCommon, extractHrefRfcPart } from '../rfc.ts'
 import type { RfcCommon, RfcBucketHtmlDocument, RfcEditorToc } from '../rfc.ts'
 import { assertNever } from '../typescript.ts'
 import { PUBLIC_SITE } from '../url.ts'
@@ -131,7 +131,9 @@ const sniffRfcBucketHtmlType = (
 
   if (generator) {
     const content = generator.getAttribute('content')
-    if (content?.startsWith('xml2rfc')) return 'xml2rfc'
+    if (content?.startsWith('xml2rfc')) {
+      return 'xml2rfc'
+    }
   }
 
   if (isPlaintext) {
@@ -179,38 +181,50 @@ const rfcDocumentToPojo = (rfcDocument: Node[]): DocumentPojo => {
  *    a 2nd arg to resolve relative links against, so this function resolves relative
  *    paths from `./rfcN.html` to `/rfc/rfcN.html`. So they're still relative hrefs but
  *    relative to the domain, not the path.
- * 2) Many RFCs have absolute hrefs of `https://www.rfc-editor.org/rfc/rfcN.html` which
- *    would break Red's Nuxt SPA nav, so we'll convert those to `/rfc/rfcN.html`. This
- *    also makes these links work on localhost/staging etc.
- *
- * TODO: decide whether to convert links from `/rfc/rfcN.html` to `/info/rfcN` so that
- * users of `/info/` stay in that app rather than browsing bucket HTML.
+ * 2) Many RFCs have absolute hrefs of `https://www.rfc-editor.org/ANYTHING` so
+ *    when they hardcode links to prod we'll we'll convert those to `/ANYTHING`. This
+ *    also makes these links work relatively on localhost/staging etc.
+ * 3) Many RFCs have links to '/rfc/rfcN.html', so —when browsing from 'info/rfcN/'—
+ *    users would keep leaving the '/info/*' route and instead browse bucket HTML.
+ *    So there is a high-level question of whether users should be able to follow RFC
+ *    link after RFC link while staying within the Info route’s modern UI/UX, and it's
+ *    been decided that the Info route will encourage this by changing some '/rfc/*'
+ *    links.
  **/
 const convertHrefs = (rfcDocument: Node[], baseUrl: URL): void => {
   const publicSiteUrl = new URL(PUBLIC_SITE)
   const walk = (node: Node): void => {
     if (isHtmlElement(node)) {
       if (node.nodeName.toLowerCase() === 'a') {
-        const href = node.getAttribute('href')
+        const originalHref = node.getAttribute('href')
+        let href = node.getAttribute('href')
         if (
           href &&
           // don't convert hrefs that at are just internal links, but do convert
           // eg './rfcN.html#section' or './rfcN' etc
-          !href.startsWith('#') 
+          !href.startsWith('#')
         ) {
           const url = new URL(href, baseUrl)
+
           if (
             url.protocol === publicSiteUrl.protocol &&
             url.host === publicSiteUrl.host
           ) {
-            const newHref = `${url.pathname}${url.search}${url.hash}`
-            node.setAttribute('href', newHref)
-            console.log(
-              ' - replace href',
-              JSON.stringify(href),
-              JSON.stringify(newHref)
-            )
+            // see (1) and (2) above
+            href = `${url.pathname}${url.search}${url.hash}`
           }
+
+          if(href.startsWith('/rfc/') && !href.endsWith('.pdf')) {
+            const rfcPart = extractHrefRfcPart(href)
+            if(rfcPart) {
+              // see (3) above
+              href = `/info/${rfcPart}/`
+            }
+          }
+
+          console.log(' - replace href', JSON.stringify(originalHref), JSON.stringify(href))
+
+          node.setAttribute('href', href)
         }
       }
       Array.from(node.childNodes).forEach(walk)
