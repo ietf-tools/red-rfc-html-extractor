@@ -218,13 +218,14 @@ const convertHrefs = (rfcDocument: Node[], baseUrl: URL): void => {
             const rfcPart = extractHrefRfcPart(href)
             if(rfcPart) {
               // see (3) above
-              href = `/info/${rfcPart}/`
+              href = `/info/${rfcPart}/${url.search}${url.hash}`
             }
           }
 
-          console.log(' - replace href', JSON.stringify(originalHref), JSON.stringify(href))
-
-          node.setAttribute('href', href)
+          if(href !== originalHref) {
+            console.log(' - replace href', JSON.stringify(originalHref), JSON.stringify(href))
+            node.setAttribute('href', href)
+          }          
         }
       }
       Array.from(node.childNodes).forEach(walk)
