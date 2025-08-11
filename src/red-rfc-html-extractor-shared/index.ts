@@ -254,11 +254,11 @@ const convertHrefs = (rfcDocument: Node[], baseUrl: URL): void => {
           }
 
           if (href !== originalHref) {
-            console.log(
-              ' - replace href',
-              JSON.stringify(originalHref),
-              JSON.stringify(href)
-            )
+            // console.log(
+            //   ' - replace href',
+            //   JSON.stringify(originalHref),
+            //   JSON.stringify(href)
+            // )
             node.setAttribute('href', href)
           }
         }
