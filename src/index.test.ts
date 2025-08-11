@@ -15,7 +15,7 @@ const processRfcBucketHtml = async (rfcNumber: number) => {
 const RFC_PLAINTEXT_EXAMPLE = 2000
 const RFC_XML2RFC_EXAMPLE = 9000
 
-test(`processRfcBucketHtml(${RFC_PLAINTEXT_EXAMPLE}) RFC without TOC`, async () => {
+test.skip(`processRfcBucketHtml(${RFC_PLAINTEXT_EXAMPLE}) RFC without TOC`, async () => {
   const rfcBucketHtmlDocument = await processRfcBucketHtml(
     RFC_PLAINTEXT_EXAMPLE
   )

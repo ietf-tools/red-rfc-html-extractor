@@ -1,3 +1,4 @@
+import sanitizeHtml from 'sanitize-html'
 import {
   elementAttributesToObject,
   getDOMParser,
@@ -31,14 +32,45 @@ import {
 export const fetchSourceRfcHtml = async (
   rfcNumber: number
 ): Promise<string> => {
-  const url = `https://www.rfc-editor.org/rfc-neue/rfc${rfcNumber}.html`
+  const url = `${PUBLIC_SITE}/rfc-neue/rfc${rfcNumber}.html`
   const response = await fetch(url)
   if (!response.ok) {
     throw Error(
       `Unable to fetch ${url}: ${response.status} ${response.statusText}`
     )
   }
-  return response.text()
+  const dirtyHtml = await response.text()
+  const sanitisedHtml = sanitizeHtml(dirtyHtml, {
+    allowedTags: sanitizeHtml.defaults.allowedTags.concat([
+      'html',
+      'head',
+      'body',
+      'meta',
+      'title',
+      'link'
+    ]),
+    allowedAttributes: {
+      '*': ['id', 'class', 'style', 'dir'],
+      a: ['href', 'rel'],
+      meta: ['name', 'content'],
+      time: ['datetime'],
+      td: ['colspan', 'rowspan'],
+      th: ['colspan', 'rowspan'],
+      ol: ['start', 'type'],
+      link: ['rel', 'href']
+    },
+    allowedSchemes: [
+      'data',
+      'http',
+      'https',
+      'tel',
+      'ftp',
+      'mailto',
+      'urn' // eg RFC9000 has <link rel="alternate" href="urn:issn:2070-1721">
+    ]
+  })
+  console.log(sanitisedHtml.substring(0, 3000))
+  return sanitisedHtml
 }
 
 export type RfcAndToc = {
@@ -214,18 +246,22 @@ const convertHrefs = (rfcDocument: Node[], baseUrl: URL): void => {
             href = `${url.pathname}${url.search}${url.hash}`
           }
 
-          if(href.startsWith('/rfc/') && !href.endsWith('.pdf')) {
+          if (href.startsWith('/rfc/') && !href.endsWith('.pdf')) {
             const rfcPart = extractHrefRfcPart(href)
-            if(rfcPart) {
+            if (rfcPart) {
               // see (3) above
               href = `/info/${rfcPart}/${url.search}${url.hash}`
             }
           }
 
-          if(href !== originalHref) {
-            console.log(' - replace href', JSON.stringify(originalHref), JSON.stringify(href))
+          if (href !== originalHref) {
+            console.log(
+              ' - replace href',
+              JSON.stringify(originalHref),
+              JSON.stringify(href)
+            )
             node.setAttribute('href', href)
-          }          
+          }
         }
       }
       Array.from(node.childNodes).forEach(walk)

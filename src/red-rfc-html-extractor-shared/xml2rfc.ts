@@ -93,7 +93,7 @@ export const parseXml2RfcBody = (
         rfcAndToc.rfc.number === blankRfcCommon.number
       ) {
         rfcAndToc.rfc.number = parseInt(
-          node.innerText.replace(/[^0-9]/gi, ''),
+          getInnerText(node).replace(/[^0-9]/gi, ''),
           10
         )
       } else if (node.id === 'title') {
