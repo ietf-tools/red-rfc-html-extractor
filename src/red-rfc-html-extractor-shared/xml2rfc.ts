@@ -131,31 +131,38 @@ const parseXml2RfcToc = (toc: HTMLElement): RfcEditorToc => {
               childNode.nodeName.toLowerCase() !== 'ul'
             ) {
               const internalLinks = childNode.querySelectorAll('a')
-              return Array.from(internalLinks).map((internalLink) => {
-                if (isHtmlElement(internalLink)) {
-                  const href = internalLink.getAttribute('href')
-                  if (
-                    href?.startsWith('#')
-                    // it's an internal link, assume a TOC link
-                  ) {
-                    const title = getInnerText(internalLink)
-                    if (title.length > 0) {
-                      return {
-                        id: href.substring(1),
-                        title
+              return Array
+                .from(internalLinks)
+                .filter((internalLink) => {
+                  // RFC8881 has pilcrows in the TOC
+                  // https://www.rfc-editor.org/rfc/rfc8881.html
+                  return internalLink.classList.contains('pilcrow')
+                })
+                .map((internalLink) => {
+                  if (isHtmlElement(internalLink)) {
+                    const href = internalLink.getAttribute('href')
+                    if (
+                      href?.startsWith('#')
+                      // it's an internal link, assume a TOC link
+                    ) {
+                      const title = getInnerText(internalLink)
+                      if (title.length > 0) {
+                        return {
+                          id: href.substring(1),
+                          title
+                        }
                       }
+                    } else {
+                      console.warn(
+                        `Found non TOC link`,
+                        href,
+                        internalLink.outerHTML
+                      )
                     }
                   } else {
-                    console.warn(
-                      `Found non TOC link`,
-                      href,
-                      internalLink.outerHTML
-                    )
+                    throw Error(`Didn't expect non-element. Was ${internalLink}`)
                   }
-                } else {
-                  throw Error(`Didn't expect non-element. Was ${internalLink}`)
-                }
-              })
+                })
             }
           })
           .filter((link): link is TocLink => {
