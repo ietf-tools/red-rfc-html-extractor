@@ -136,7 +136,7 @@ const parseXml2RfcToc = (toc: HTMLElement): RfcEditorToc => {
                 .filter((internalLink) => {
                   // RFC8881 has pilcrows in the TOC
                   // https://www.rfc-editor.org/rfc/rfc8881.html
-                  return internalLink.classList.contains('pilcrow')
+                  return !internalLink.classList.contains('pilcrow')
                 })
                 .map((internalLink) => {
                   if (isHtmlElement(internalLink)) {
