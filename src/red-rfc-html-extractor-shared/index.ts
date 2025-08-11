@@ -69,7 +69,6 @@ export const fetchSourceRfcHtml = async (
       'urn' // eg RFC9000 has <link rel="alternate" href="urn:issn:2070-1721">
     ]
   })
-  console.log(sanitisedHtml.substring(0, 3000))
   return sanitisedHtml
 }
 
