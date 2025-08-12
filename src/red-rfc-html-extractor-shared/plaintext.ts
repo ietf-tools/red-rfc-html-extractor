@@ -225,15 +225,7 @@ const parsePlaintextToc = (
 }
 
 export const getPlaintextRfcDocument = (dom: Document): Node[] => {
-  return Array.from(dom.body.childNodes).filter((node) => {
-    if (isHtmlElement(node)) {
-      switch (node.nodeName.toLowerCase()) {
-        case 'script':
-          return false
-      }
-    }
-    return true
-  })
+  return Array.from(dom.body.childNodes)
 }
 
 export const getPlaintextMaxLineLength = async (

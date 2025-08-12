@@ -14,10 +14,10 @@ export const parseXml2RfcHead = (
 ): void => {
   head.childNodes.forEach((node) => {
     if (isHtmlElement(node)) {
-      let name: string | null,
-        content: string | null,
-        rel: string | null,
-        href: string | null
+      let name: string | null
+      let content: string | null
+      let rel: string | null
+      let href: string | null
 
       switch (node.nodeName.toLowerCase()) {
         case 'meta':
@@ -131,8 +131,7 @@ const parseXml2RfcToc = (toc: HTMLElement): RfcEditorToc => {
               childNode.nodeName.toLowerCase() !== 'ul'
             ) {
               const internalLinks = childNode.querySelectorAll('a')
-              return Array
-                .from(internalLinks)
+              return Array.from(internalLinks)
                 .filter((internalLink) => {
                   // RFC8881 has pilcrows in the TOC
                   // https://www.rfc-editor.org/rfc/rfc8881.html
@@ -160,7 +159,9 @@ const parseXml2RfcToc = (toc: HTMLElement): RfcEditorToc => {
                       )
                     }
                   } else {
-                    throw Error(`Didn't expect non-element. Was ${internalLink}`)
+                    throw Error(
+                      `Didn't expect non-element. Was ${internalLink}`
+                    )
                   }
                 })
             }
@@ -221,8 +222,6 @@ export const getXml2RfcRfcDocument = (dom: Document): Node[] => {
   const nodes = Array.from(dom.body.childNodes).filter((node) => {
     if (isHtmlElement(node)) {
       switch (node.nodeName.toLowerCase()) {
-        case 'script':
-          return false
         case 'table':
           if (node.classList.contains('ears')) {
             return false
@@ -247,7 +246,7 @@ export const getXml2RfcRfcDocument = (dom: Document): Node[] => {
     return true
   })
 
-  return nodes.map(fixNodeForMobile)
+  return nodes.map((node) => fixNodeForMobile(node, false))
 }
 
 /**
@@ -259,25 +258,38 @@ export const getXml2RfcRfcDocument = (dom: Document): Node[] => {
  *
  * If using unpopular classes this would need a different approach.
  */
-const fixNodeForMobile = (node: Node): Node => {
+const fixNodeForMobile = (
+  node: Node,
+  isInsideHorizontalScrollable: boolean
+): Node => {
   if (isHtmlElement(node)) {
     const tagName = node.tagName.toLowerCase()
     const wrapper = node.ownerDocument.createElement('div')
-    switch (tagName) {
-      case 'pre':
-      case 'table':
-        // <pre>s can be too wide, so we wrap them to make a scrollable area
-        wrapper.classList.add(
-          // see above docstring about Tailwind classes
-          'w-full',
-          'max-w-screen',
-          'overflow-x-auto'
-        )
-        wrapper.setAttribute('data-component', 'HorizontalScrollable')
-        wrapper.appendChild(node)
-        return wrapper
+    if (!isInsideHorizontalScrollable) {
+      switch (tagName) {
+        case 'ol':
+        case 'ul':
+        case 'pre':
+        case 'table':
+          // these can be too wide, so we wrap them to make a scrollable area
+          wrapper.classList.add(
+            // see above docstring about Tailwind classes
+            'w-full',
+            'max-w-screen',
+            'overflow-x-auto'
+          )
+          wrapper.setAttribute('data-component', 'HorizontalScrollable')
+          const newChildren = Array.from(node.childNodes).map((node) =>
+            fixNodeForMobile(node, true)
+          )
+          node.replaceChildren(...newChildren)
+          wrapper.appendChild(node)
+          return wrapper
+      }
     }
-    const newChildren = Array.from(node.childNodes).map(fixNodeForMobile)
+    const newChildren = Array.from(node.childNodes).map((node) =>
+      fixNodeForMobile(node, false)
+    )
     node.replaceChildren(...newChildren)
     return node
   }
@@ -320,7 +332,7 @@ export const getXml2RfcMaxLineLength = async (
    * in the line so that we can account for Red's use of buttons following
    * links when in responsive/touch mode. We allocate ANCHOR_SUFFIX_CHAR_WIDTH
    * chars per link in a line.
-   * 
+   *
    * This means that the max line length can vary between touch and touchless
    * interfaces.
    */
@@ -337,7 +349,7 @@ export const getXml2RfcMaxLineLength = async (
           )
           const innerText = getInnerText(lineDom.documentElement)
           const anchors = lineDom.querySelectorAll('a')
-          return innerText.length + (anchors.length * ANCHOR_SUFFIX_CHAR_WIDTH)
+          return innerText.length + anchors.length * ANCHOR_SUFFIX_CHAR_WIDTH
         })
       ),
     DEFAULT_MAX_LINE_LENGTH
