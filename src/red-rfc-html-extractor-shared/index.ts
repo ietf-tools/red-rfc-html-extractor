@@ -30,13 +30,29 @@ import {
 } from './xml2rfc.ts'
 
 const SVG_STYLE_ATTRIBUTES = [
-  'stroke',
+  'role',
+
   'fill',
+  'fill-rule',
+
+  'clip-rule',
+
+  'stroke',
+  'stroke-width',
+  'stroke-linecap',
+  'stroke-linejoin',
+  'stroke-miterlimit',
+
+  'transform',
+  'transform-origin',
+
+  'rotate',
+
+  // Text attributes
   'text-anchor',
   'font-family',
   'font-size',
-  'stroke-linecap',
-  'transform'
+  'text-anchor'
 ]
 
 export const fetchSourceRfcHtml = async (
@@ -59,12 +75,28 @@ export const fetchSourceRfcHtml = async (
       'title',
       'link',
       'svg',
-      'path',
-      'circle',
-      'line',
-      'polygon',
       'g',
-      'text'
+      'defs',
+      'stop',
+      'path',
+      'rect',
+      'circle',
+      'ellipse',
+      'polygon',
+      'polyline',
+      'line',
+      'text',
+      'tspan',
+      'tbreak',
+      'textPath',
+      'image',
+      'use',
+      'clipPath',
+      'mask',
+      'pattern',
+      'solidColor',
+      'linearGradient',
+      'radialGradient'
     ]),
     allowedAttributes: {
       '*': ['id', 'class', 'style', 'dir'],
@@ -81,12 +113,49 @@ export const fetchSourceRfcHtml = async (
         'width',
         'height',
         'viewBox',
+        'preserveAspectRatio',
         ...SVG_STYLE_ATTRIBUTES
       ],
-      g: [...SVG_STYLE_ATTRIBUTES],
-      path: ['d', ...SVG_STYLE_ATTRIBUTES],
+      'desc': [...SVG_STYLE_ATTRIBUTES],
+      use: [
+        'x',
+        'y',
+        'width',
+        'height',
+        'href',
+        'xlink:href',
+        ...SVG_STYLE_ATTRIBUTES
+      ],
+      g: ['label', ...SVG_STYLE_ATTRIBUTES],
+      path: ['d', 'pathLength', ...SVG_STYLE_ATTRIBUTES],
       text: ['x', 'y', ...SVG_STYLE_ATTRIBUTES],
-      polygon: ['points', ...SVG_STYLE_ATTRIBUTES]
+      circle: ['cx', 'cy', 'r', ...SVG_STYLE_ATTRIBUTES],
+      ellipse: ['cx', 'cy', 'rx', 'ry', ...SVG_STYLE_ATTRIBUTES],
+      textPath: ['href', 'startOffset'],
+      tspan: ['x', 'y', 'startOffset'],
+      polygon: ['points', ...SVG_STYLE_ATTRIBUTES],
+      polyline: ['points', ...SVG_STYLE_ATTRIBUTES],
+      linearGradient: [
+        'x1',
+        'x2',
+        'y1',
+        'y2',
+        'gradientUnits',
+        'spreadMethod',
+        ...SVG_STYLE_ATTRIBUTES
+      ],
+      rect: ['x', 'y', 'width', 'height', 'rx', 'ry', ...SVG_STYLE_ATTRIBUTES],
+      radialGradient: [
+        'cx',
+        'cy',
+        'r',
+        'fx',
+        'fy',
+        'fr',
+        'gradientUnits',
+        'spreadMethod',
+        ...SVG_STYLE_ATTRIBUTES
+      ]
     },
     allowedSchemes: [
       'data',
