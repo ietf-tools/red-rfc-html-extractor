@@ -47,7 +47,14 @@ export const fetchSourceRfcHtml = async (
       'body',
       'meta',
       'title',
-      'link'
+      'link',
+      'svg',
+      'path',
+      'circle',
+      'line',
+      'polygon',
+      'g',
+      'text',
     ]),
     allowedAttributes: {
       '*': ['id', 'class', 'style', 'dir'],
