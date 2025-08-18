@@ -271,6 +271,7 @@ const fixNodeForMobile = (
         case 'ul':
         case 'pre':
         case 'table':
+        case 'svg':
           // these can be too wide, so we wrap them to make a scrollable area
           wrapper.classList.add(
             // see above docstring about Tailwind classes
@@ -288,7 +289,7 @@ const fixNodeForMobile = (
       }
     }
     const newChildren = Array.from(node.childNodes).map((node) =>
-      fixNodeForMobile(node, false)
+      fixNodeForMobile(node, isInsideHorizontalScrollable)
     )
     node.replaceChildren(...newChildren)
     return node
