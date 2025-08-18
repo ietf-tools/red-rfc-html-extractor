@@ -29,6 +29,16 @@ import {
   parseXml2RfcHead
 } from './xml2rfc.ts'
 
+const SVG_STYLE_ATTRIBUTES = [
+  'stroke',
+  'fill',
+  'text-anchor',
+  'font-family',
+  'font-size',
+  'stroke-linecap',
+  'transform'
+]
+
 export const fetchSourceRfcHtml = async (
   rfcNumber: number
 ): Promise<string> => {
@@ -54,7 +64,7 @@ export const fetchSourceRfcHtml = async (
       'line',
       'polygon',
       'g',
-      'text',
+      'text'
     ]),
     allowedAttributes: {
       '*': ['id', 'class', 'style', 'dir'],
@@ -64,7 +74,19 @@ export const fetchSourceRfcHtml = async (
       td: ['colspan', 'rowspan'],
       th: ['colspan', 'rowspan'],
       ol: ['start', 'type'],
-      link: ['rel', 'href']
+      link: ['rel', 'href'],
+      svg: [
+        'xmlns',
+        'version',
+        'width',
+        'height',
+        'viewBox',
+        ...SVG_STYLE_ATTRIBUTES
+      ],
+      g: [...SVG_STYLE_ATTRIBUTES],
+      path: ['d', ...SVG_STYLE_ATTRIBUTES],
+      text: ['x', 'y', ...SVG_STYLE_ATTRIBUTES],
+      polygon: ['points', ...SVG_STYLE_ATTRIBUTES]
     },
     allowedSchemes: [
       'data',
@@ -74,7 +96,11 @@ export const fetchSourceRfcHtml = async (
       'ftp',
       'mailto',
       'urn' // eg RFC9000 has <link rel="alternate" href="urn:issn:2070-1721">
-    ]
+    ],
+    parser: {
+      lowerCaseTags: false,
+      lowerCaseAttributeNames: false
+    }
   })
   return sanitisedHtml
 }
