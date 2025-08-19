@@ -317,7 +317,7 @@ const fixNodeForMobile = (
           if (!svg) {
             console.error({ node })
             throw Error(`Expected SVG but got node (see console) ${node}`)
-          }
+          } 
 
           svg.replaceChildren(...newChildren)
           const widthAttr = svg.getAttribute("width")
