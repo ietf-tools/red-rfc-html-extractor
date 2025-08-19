@@ -261,7 +261,8 @@ export const getXml2RfcRfcDocument = (dom: Document): Node[] => {
  */
 const fixNodeForMobile = (
   node: Node,
-  isInsideHorizontalScrollable: boolean
+  isInsideHorizontalScrollable: boolean,
+  parentsContainsSvg: boolean
 ): Node | Node[] => {
   const getHorizontalScrollable = (htmlElement: HTMLElement, isMobileAbsolute: boolean) => {
     const horizontalScrollable = htmlElement.ownerDocument.createElement('div')
@@ -298,12 +299,21 @@ const fixNodeForMobile = (
   if (isHtmlElement(node)) {
     const tagName = node.tagName.toLowerCase()
 
+    const containsSvg = !!node.querySelector("svg")
+
     const newChildren = Array.from(node.childNodes).flatMap((node) =>
-      fixNodeForMobile(node, isInsideHorizontalScrollable)
+      fixNodeForMobile(
+        node,
+        isInsideHorizontalScrollable,
+        parentsContainsSvg ? parentsContainsSvg : tagName === 'svg'
+      )
     )
 
-    if (!isInsideHorizontalScrollable) {
-        
+    if(parentsContainsSvg === false && containsSvg) {
+      node.classList.add('relative')
+    }
+
+    if (!isInsideHorizontalScrollable) {        
       switch (tagName) {
         case 'ol':
         case 'ul':
