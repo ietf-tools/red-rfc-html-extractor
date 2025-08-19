@@ -301,9 +301,9 @@ const fixNodeForMobile = (
         case 'table':
           // these can be too wide, so we wrap them in a scrollable area
           node.replaceChildren(...newChildren)
-          const hs = getHorizontalScrollable(node)
-          hs.appendChild(node)
-          return hs
+          const hs1 = getHorizontalScrollable(node)
+          hs1.appendChild(node)
+          return hs1
         case 'svg':
           // these can be too wide, so we'll wrap them in a scrollable area
           // but these can also be indented ie an SVG displayed in a <li>
@@ -318,20 +318,12 @@ const fixNodeForMobile = (
             console.error({ node })
             throw Error(`Expected SVG but got node (see console) ${node}`)
           }
-            
+
           svg.replaceChildren(...newChildren)
           const widthAttr = svg.getAttribute("width")
           const widthPx = parseFloat(widthAttr ?? '')
           const heightAttr = svg.getAttribute("height")
           const heightPx = parseFloat(heightAttr ?? '')
-          console.log({
-            widthAttr,
-            heightAttr,
-            widthPx,
-            heightPx,
-            widthownerSVGElement: svg.ownerSVGElement?.width,
-            heightownerSVGElement: svg.ownerSVGElement?.height,
-          })
           if(Number.isNaN(widthPx) || Number.isNaN(heightPx)) {
             console.warn("Could not find width/height", { widthAttr, heightAttr })
             return node
@@ -344,8 +336,8 @@ const fixNodeForMobile = (
             'left-0',
           )
           // insert a placeholder to take up the same space within the flow
-          const placeholder = getPlaceholder(node, widthPx, heightPx)
-          return [placeholder, hs2]
+          const ph1 = getPlaceholder(node, widthPx, heightPx)
+          return [hs2, ph1]
       }
     }
 
