@@ -52,7 +52,7 @@ export const parseXml2RfcHead = (
           break
         case 'title':
           // don't try to parse the <title> because it has both the RFC title and RFC number in it,
-          // so we'll use other parts of the HTML (the title in the <body>) which are easier to use
+          // so we'll use other parts of the HTML (the RFC title within the <body>) which are easier to use
           break
         case 'link':
           rel = node.getAttribute('rel')
@@ -246,11 +246,12 @@ export const getXml2RfcRfcDocument = (dom: Document): Node[] => {
     return true
   })
 
-  return nodes.map((node) => fixNodeForMobile(node, false))
+  return nodes.flatMap((node) => fixNodeForMobile(node, false))
 }
 
 /**
- * The HTML needs minor changes to ensure mobile rendering on Red.
+ * The HTML needs minor changes to ensure mobile rendering when rendered on
+ * the rfc-editor site.
  *
  * Tailwind's grepper won't be able to see these CSS classes so we rely on
  * the same classes already existing in the generated CSS bundle (because they
@@ -261,36 +262,93 @@ export const getXml2RfcRfcDocument = (dom: Document): Node[] => {
 const fixNodeForMobile = (
   node: Node,
   isInsideHorizontalScrollable: boolean
-): Node => {
+): Node | Node[] => {
+  const getHorizontalScrollable = (htmlElement: HTMLElement) => {
+    const horizontalScrollable = htmlElement.ownerDocument.createElement('div')
+    horizontalScrollable.setAttribute('data-component', 'HorizontalScrollable')
+    // these can be too wide, so we wrap them to make a scrollable area
+    horizontalScrollable.classList.add(
+      // see above docstring about Tailwind classes
+      'w-full',
+      'max-w-screen',
+      'overflow-x-auto'
+    )
+    return horizontalScrollable
+  }
+
+  const getPlaceholder = (htmlElement: HTMLElement, widthPx: number, heightPx: number) => {
+    const placeholder = htmlElement.ownerDocument.createElement('div')
+    placeholder.setAttribute('data-placeholder', 'true')
+    placeholder.setAttribute('aria-hidden', 'true')
+    placeholder.style.width = `${widthPx}px`
+    placeholder.style.height = `${heightPx}px`
+    return placeholder
+  }
+
   if (isHtmlElement(node)) {
     const tagName = node.tagName.toLowerCase()
-    const wrapper = node.ownerDocument.createElement('div')
+
+    const newChildren = Array.from(node.childNodes).flatMap((node) =>
+      fixNodeForMobile(node, isInsideHorizontalScrollable)
+    )
+
     if (!isInsideHorizontalScrollable) {
+        
       switch (tagName) {
         case 'ol':
         case 'ul':
         case 'pre':
         case 'table':
-        case 'svg':
-          // these can be too wide, so we wrap them to make a scrollable area
-          wrapper.classList.add(
-            // see above docstring about Tailwind classes
-            'w-full',
-            'max-w-screen',
-            'overflow-x-auto'
-          )
-          wrapper.setAttribute('data-component', 'HorizontalScrollable')
-          const newChildren = Array.from(node.childNodes).map((node) =>
-            fixNodeForMobile(node, true)
-          )
+          // these can be too wide, so we wrap them in a scrollable area
           node.replaceChildren(...newChildren)
-          wrapper.appendChild(node)
-          return wrapper
+          const hs = getHorizontalScrollable(node)
+          hs.appendChild(node)
+          return hs
+        case 'svg':
+          // these can be too wide, so we'll wrap them in a scrollable area
+          // but these can also be indented ie an SVG displayed in a <li>
+          // so the scrollable area would be offset too which doesn't look
+          // nice.
+          // so we'll pull the scrollable area out of Normal Flow using absolute
+          // and put it on the left, but insert a placeholder of the same size
+          // so as to not interupt the flow.
+          //
+          const svg = node instanceof SVGElement ? node : undefined
+          if (!svg) {
+            console.error({ node })
+            throw Error(`Expected SVG but got node (see console) ${node}`)
+          }
+          
+          svg.replaceChildren(...newChildren)
+          const widthAttr = svg.getAttribute("width")
+          const widthPx = parseFloat(widthAttr ?? '')
+          const heightAttr = svg.getAttribute("height")
+          const heightPx = parseFloat(heightAttr ?? '')
+          console.log({
+            widthAttr,
+            heightAttr,
+            widthPx,
+            heightPx,
+            widthownerSVGElement: svg.ownerSVGElement?.width,
+            heightownerSVGElement: svg.ownerSVGElement?.height,
+          })
+          if(Number.isNaN(widthPx) || Number.isNaN(heightPx)) {
+            console.warn("Could not find width/height", { widthAttr, heightAttr })
+            return node
+          }
+          const hs2 = getHorizontalScrollable(node)
+          hs2.appendChild(node)
+          hs2.classList.add(
+            // pull this out of the flow
+            'absolute',
+            'left-0',
+          )
+          // insert a placeholder to take up the same space within the flow
+          const placeholder = getPlaceholder(node, widthPx, heightPx)
+          return [placeholder, hs2]
       }
     }
-    const newChildren = Array.from(node.childNodes).map((node) =>
-      fixNodeForMobile(node, isInsideHorizontalScrollable)
-    )
+
     node.replaceChildren(...newChildren)
     return node
   }
