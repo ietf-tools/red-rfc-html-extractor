@@ -246,7 +246,7 @@ export const getXml2RfcRfcDocument = (dom: Document): Node[] => {
     return true
   })
 
-  return nodes.flatMap((node) => fixNodeForMobile(node, false))
+  return nodes.flatMap((node) => fixNodeForMobile(node, false, false))
 }
 
 /**
@@ -262,7 +262,7 @@ export const getXml2RfcRfcDocument = (dom: Document): Node[] => {
 const fixNodeForMobile = (
   node: Node,
   isInsideHorizontalScrollable: boolean,
-  parentsContainsSvg: boolean
+  parentsHaveSvgWrapper: boolean
 ): Node | Node[] => {
   const getHorizontalScrollable = (htmlElement: HTMLElement, isMobileAbsolute: boolean) => {
     const horizontalScrollable = htmlElement.ownerDocument.createElement('div')
@@ -298,20 +298,21 @@ const fixNodeForMobile = (
 
   if (isHtmlElement(node)) {
     const tagName = node.tagName.toLowerCase()
-
+    const isSvg = tagName === 'svg'
     const containsSvg = !!node.querySelector("svg")
+    const isTopLevelSvgWrapper = parentsHaveSvgWrapper === false && containsSvg
+    if(isTopLevelSvgWrapper) {
+      node.classList.add('relative')
+    }
 
     const newChildren = Array.from(node.childNodes).flatMap((node) =>
       fixNodeForMobile(
         node,
         isInsideHorizontalScrollable,
-        parentsContainsSvg ? parentsContainsSvg : tagName === 'svg'
+        isTopLevelSvgWrapper
       )
     )
 
-    if(parentsContainsSvg === false && containsSvg) {
-      node.classList.add('relative')
-    }
 
     if (!isInsideHorizontalScrollable) {        
       switch (tagName) {
