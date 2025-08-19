@@ -313,12 +313,12 @@ const fixNodeForMobile = (
           // and put it on the left, but insert a placeholder of the same size
           // so as to not interupt the flow.
           //
-          const svg = node instanceof SVGElement ? node : undefined
+          const svg = node as unknown as SVGElement
           if (!svg) {
             console.error({ node })
             throw Error(`Expected SVG but got node (see console) ${node}`)
           }
-          
+            
           svg.replaceChildren(...newChildren)
           const widthAttr = svg.getAttribute("width")
           const widthPx = parseFloat(widthAttr ?? '')
