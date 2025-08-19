@@ -285,6 +285,16 @@ const fixNodeForMobile = (
     return placeholder
   }
 
+  const listParents = (el: HTMLElement): void => {
+    const parents: HTMLElement[] = []
+    let pointer = el
+    while(pointer.parentElement) {
+      parents.push(pointer.parentElement)
+      pointer = pointer.parentElement
+    }
+    console.log("SVG Parents", ...parents.map(el => el.tagName))
+  }
+
   if (isHtmlElement(node)) {
     const tagName = node.tagName.toLowerCase()
 
@@ -314,6 +324,7 @@ const fixNodeForMobile = (
           // so as to not interupt the flow.
           //
           const svg = node as unknown as SVGElement
+          listParents(svg as unknown as HTMLElement)
           if (!svg) {
             console.error({ node })
             throw Error(`Expected SVG but got node (see console) ${node}`)
