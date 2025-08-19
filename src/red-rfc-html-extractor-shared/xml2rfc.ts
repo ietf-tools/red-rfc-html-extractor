@@ -263,9 +263,10 @@ const fixNodeForMobile = (
   node: Node,
   isInsideHorizontalScrollable: boolean
 ): Node | Node[] => {
-  const getHorizontalScrollable = (htmlElement: HTMLElement) => {
+  const getHorizontalScrollable = (htmlElement: HTMLElement, isMobileAbsolute: boolean) => {
     const horizontalScrollable = htmlElement.ownerDocument.createElement('div')
     horizontalScrollable.setAttribute('data-component', 'HorizontalScrollable')
+    horizontalScrollable.setAttribute('data-component-mobile-absolute', isMobileAbsolute.toString())
     // these can be too wide, so we wrap them to make a scrollable area
     horizontalScrollable.classList.add(
       // see above docstring about Tailwind classes
@@ -278,8 +279,7 @@ const fixNodeForMobile = (
 
   const getPlaceholder = (htmlElement: HTMLElement, widthPx: number, heightPx: number) => {
     const placeholder = htmlElement.ownerDocument.createElement('div')
-    placeholder.setAttribute('data-placeholder', 'true')
-    placeholder.setAttribute('aria-hidden', 'true')
+    placeholder.setAttribute('data-component', 'Placeholder')
     placeholder.style.width = `${widthPx}px`
     placeholder.style.height = `${heightPx}px`
     return placeholder
@@ -301,7 +301,7 @@ const fixNodeForMobile = (
         case 'table':
           // these can be too wide, so we wrap them in a scrollable area
           node.replaceChildren(...newChildren)
-          const hs1 = getHorizontalScrollable(node)
+          const hs1 = getHorizontalScrollable(node, false)
           hs1.appendChild(node)
           return hs1
         case 'svg':
@@ -328,13 +328,8 @@ const fixNodeForMobile = (
             console.warn("Could not find width/height", { widthAttr, heightAttr })
             return node
           }
-          const hs2 = getHorizontalScrollable(node)
+          const hs2 = getHorizontalScrollable(node, true)
           hs2.appendChild(node)
-          hs2.classList.add(
-            // pull this out of the flow
-            'absolute',
-            'left-0',
-          )
           // insert a placeholder to take up the same space within the flow
           const ph1 = getPlaceholder(node, widthPx, heightPx)
           return [hs2, ph1]
