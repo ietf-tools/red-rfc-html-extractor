@@ -309,7 +309,7 @@ const fixNodeForMobile = (
       fixNodeForMobile(
         node,
         isInsideHorizontalScrollable,
-        isTopLevelSvgWrapper
+        parentsHaveSvgWrapper || isTopLevelSvgWrapper
       )
     )
 
