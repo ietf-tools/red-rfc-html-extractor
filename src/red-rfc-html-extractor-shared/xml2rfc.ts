@@ -264,10 +264,10 @@ const fixNodeForMobile = (
   isInsideHorizontalScrollable: boolean,
   parentsHaveSvgWrapper: boolean
 ): Node | Node[] => {
-  const getHorizontalScrollable = (htmlElement: HTMLElement, isMobileAbsolute: boolean) => {
+  const getHorizontalScrollable = (htmlElement: HTMLElement, isAbsolute: boolean) => {
     const horizontalScrollable = htmlElement.ownerDocument.createElement('div')
     horizontalScrollable.setAttribute('data-component', 'HorizontalScrollable')
-    horizontalScrollable.setAttribute('data-component-mobile-absolute', isMobileAbsolute.toString())
+    horizontalScrollable.setAttribute('data-component-absolute', isAbsolute.toString())
     // these can be too wide, so we wrap them to make a scrollable area
     horizontalScrollable.classList.add(
       // see above docstring about Tailwind classes
@@ -300,7 +300,7 @@ const fixNodeForMobile = (
     const tagName = node.tagName.toLowerCase()
     const isSvg = tagName === 'svg'
     const containsSvg = !!node.querySelector("svg")
-    const isTopLevelSvgWrapper = parentsHaveSvgWrapper === false && containsSvg
+    const isTopLevelSvgWrapper = parentsHaveSvgWrapper === false && (containsSvg || isSvg)
     if(isTopLevelSvgWrapper) {
       node.classList.add('relative')
     }
@@ -312,7 +312,6 @@ const fixNodeForMobile = (
         isTopLevelSvgWrapper
       )
     )
-
 
     if (!isInsideHorizontalScrollable) {        
       switch (tagName) {
