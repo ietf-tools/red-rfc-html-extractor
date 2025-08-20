@@ -349,8 +349,9 @@ const fixNodeForMobile = (
           }
           const hs2 = getHorizontalScrollable(node, true)
           hs2.appendChild(node)
+          const SVG_HEIGHT_BUFFER_PX = 16
           // insert a placeholder to take up the same space within the flow
-          const ph1 = getHeightPlaceholder(node, heightPx)
+          const ph1 = getHeightPlaceholder(node, heightPx + SVG_HEIGHT_BUFFER_PX)
           return [hs2, ph1]
       }
     }
