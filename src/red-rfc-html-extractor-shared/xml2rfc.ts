@@ -264,10 +264,26 @@ const fixNodeForMobile = (
   isInsideHorizontalScrollable: boolean,
   parentsHaveSvgWrapper: boolean
 ): Node | Node[] => {
-  const getHorizontalScrollable = (htmlElement: HTMLElement, isAbsolute: boolean) => {
+  const getHorizontalScrollable = (
+    htmlElement: HTMLElement,
+    absolute?: { childWidthPx: number; childHeightPx: number }
+  ) => {
     const horizontalScrollable = htmlElement.ownerDocument.createElement('div')
     horizontalScrollable.setAttribute('data-component', 'HorizontalScrollable')
-    horizontalScrollable.setAttribute('data-component-absolute', isAbsolute.toString())
+    if (absolute) {
+      horizontalScrollable.setAttribute(
+        'data-component-absolute',
+        true.toString()
+      )
+      horizontalScrollable.setAttribute(
+        'data-component-childwidth',
+        absolute.childWidthPx.toString()
+      )
+      horizontalScrollable.setAttribute(
+        'data-component-childheight',
+        absolute.childHeightPx.toString()
+      )
+    }
     // these can be too wide, so we wrap them to make a scrollable area
     horizontalScrollable.classList.add(
       // see above docstring about Tailwind classes
@@ -278,30 +294,23 @@ const fixNodeForMobile = (
     return horizontalScrollable
   }
 
-  const getHeightPlaceholder = (htmlElement: HTMLElement, heightPx: number) => {
-    const placeholder = htmlElement.ownerDocument.createElement('div')
-    placeholder.setAttribute('data-component', 'Placeholder')
-    placeholder.style.width = `1px`
-    placeholder.style.height = `${heightPx}px`    
-    return placeholder
-  }
-
   const listParents = (el: HTMLElement): void => {
     const parents: HTMLElement[] = []
     let pointer = el
-    while(pointer.parentElement) {
+    while (pointer.parentElement) {
       parents.push(pointer.parentElement)
       pointer = pointer.parentElement
     }
-    console.log("SVG Parents", ...parents.map(el => el.tagName))
+    console.log('SVG Parents', ...parents.map((el) => el.tagName))
   }
 
   if (isHtmlElement(node)) {
     const tagName = node.tagName.toLowerCase()
     const isSvg = tagName === 'svg'
-    const containsSvg = !!node.querySelector("svg")
-    const isTopLevelSvgWrapper = parentsHaveSvgWrapper === false && (containsSvg || isSvg)
-    if(isTopLevelSvgWrapper) {
+    const containsSvg = !!node.querySelector('svg')
+    const isTopLevelSvgWrapper =
+      parentsHaveSvgWrapper === false && (containsSvg || isSvg)
+    if (isTopLevelSvgWrapper) {
       node.classList.add('relative')
     }
 
@@ -313,7 +322,7 @@ const fixNodeForMobile = (
       )
     )
 
-    if (!isInsideHorizontalScrollable) {        
+    if (!isInsideHorizontalScrollable) {
       switch (tagName) {
         case 'ol':
         case 'ul':
@@ -321,7 +330,7 @@ const fixNodeForMobile = (
         case 'table':
           // these can be too wide, so we wrap them in a scrollable area
           node.replaceChildren(...newChildren)
-          const hs1 = getHorizontalScrollable(node, false)
+          const hs1 = getHorizontalScrollable(node)
           hs1.appendChild(node)
           return hs1
         case 'svg':
@@ -338,21 +347,26 @@ const fixNodeForMobile = (
           if (!svg) {
             console.error({ node })
             throw Error(`Expected SVG but got node (see console) ${node}`)
-          } 
+          }
 
           svg.replaceChildren(...newChildren)
-          const heightAttr = svg.getAttribute("height")
+          const widthAttr = svg.getAttribute('height')
+          const widthPx = parseFloat(widthAttr ?? '')
+          const heightAttr = svg.getAttribute('height')
           const heightPx = parseFloat(heightAttr ?? '')
-          if(Number.isNaN(heightPx)) {
-            console.warn("Could not find width/height", { heightAttr })
+          if (Number.isNaN(widthPx) || Number.isNaN(heightPx)) {
+            console.error(
+              'Could not find width/height of SVG. This could break mobile layout',
+              { widthAttr, heightAttr }
+            )
             return node
           }
-          const hs2 = getHorizontalScrollable(node, true)
+          const hs2 = getHorizontalScrollable(node, {
+            childWidthPx: widthPx,
+            childHeightPx: heightPx
+          })
           hs2.appendChild(node)
-          const SVG_HEIGHT_BUFFER_PX = 16
-          // insert a placeholder to take up the same space within the flow
-          const ph1 = getHeightPlaceholder(node, heightPx + SVG_HEIGHT_BUFFER_PX)
-          return [hs2, ph1]
+          return hs2
       }
     }
 
