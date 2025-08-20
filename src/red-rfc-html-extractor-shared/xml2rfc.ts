@@ -300,7 +300,7 @@ const fixNodeForMobile = (
       parents.push(pointer.parentElement)
       pointer = pointer.parentElement
     }
-    console.log('SVG Parents', ...parents.map((el) => el.tagName.toLowerCase()))
+    console.log(' - SVG parents:', ...parents.map((el) => el.tagName.toLowerCase()))
   }
 
   if (isHtmlElement(node)) {
