@@ -278,11 +278,10 @@ const fixNodeForMobile = (
     return horizontalScrollable
   }
 
-  const getPlaceholder = (htmlElement: HTMLElement, widthPx: number, heightPx: number) => {
+  const getHeightPlaceholder = (htmlElement: HTMLElement, heightPx: number) => {
     const placeholder = htmlElement.ownerDocument.createElement('div')
     placeholder.setAttribute('data-component', 'Placeholder')
-    placeholder.style.width = `${widthPx}px`
-    placeholder.style.maxWidth = `100vw`
+    placeholder.style.width = `1px`
     placeholder.style.height = `${heightPx}px`    
     return placeholder
   }
@@ -342,18 +341,16 @@ const fixNodeForMobile = (
           } 
 
           svg.replaceChildren(...newChildren)
-          const widthAttr = svg.getAttribute("width")
-          const widthPx = parseFloat(widthAttr ?? '')
           const heightAttr = svg.getAttribute("height")
           const heightPx = parseFloat(heightAttr ?? '')
-          if(Number.isNaN(widthPx) || Number.isNaN(heightPx)) {
-            console.warn("Could not find width/height", { widthAttr, heightAttr })
+          if(Number.isNaN(heightPx)) {
+            console.warn("Could not find width/height", { heightAttr })
             return node
           }
           const hs2 = getHorizontalScrollable(node, true)
           hs2.appendChild(node)
           // insert a placeholder to take up the same space within the flow
-          const ph1 = getPlaceholder(node, widthPx, heightPx)
+          const ph1 = getHeightPlaceholder(node, heightPx)
           return [hs2, ph1]
       }
     }
