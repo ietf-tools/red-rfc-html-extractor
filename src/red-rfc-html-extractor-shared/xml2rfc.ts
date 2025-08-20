@@ -296,7 +296,7 @@ const fixNodeForMobile = (
   const listParents = (el: HTMLElement): void => {
     const parents: HTMLElement[] = []
     let pointer = el
-    while (pointer.parentElement && pointer.tagName.toLowerCase() !== 'body') {
+    while (pointer.parentElement && pointer.parentElement.tagName.toLowerCase() !== 'body') {
       parents.push(pointer.parentElement)
       pointer = pointer.parentElement
     }
