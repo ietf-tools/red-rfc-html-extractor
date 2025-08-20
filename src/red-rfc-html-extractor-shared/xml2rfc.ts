@@ -282,7 +282,8 @@ const fixNodeForMobile = (
     const placeholder = htmlElement.ownerDocument.createElement('div')
     placeholder.setAttribute('data-component', 'Placeholder')
     placeholder.style.width = `${widthPx}px`
-    placeholder.style.height = `${heightPx}px`
+    placeholder.style.maxWidth = `100vw`
+    placeholder.style.height = `${heightPx}px`    
     return placeholder
   }
 
