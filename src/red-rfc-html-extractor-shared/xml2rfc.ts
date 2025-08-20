@@ -246,7 +246,7 @@ export const getXml2RfcRfcDocument = (dom: Document): Node[] => {
     return true
   })
 
-  return nodes.flatMap((node) => fixNodeForMobile(node, false, false))
+  return nodes.flatMap((node) => fixNodeForMobile(node))
 }
 
 /**
@@ -261,8 +261,7 @@ export const getXml2RfcRfcDocument = (dom: Document): Node[] => {
  */
 const fixNodeForMobile = (
   node: Node,
-  isInsideHorizontalScrollable: boolean,
-  parentsHaveSvgWrapper: boolean
+  isInsideHorizontalScrollable: boolean = false
 ): Node | Node[] => {
   const getHorizontalScrollable = (
     htmlElement: HTMLElement,
@@ -297,62 +296,60 @@ const fixNodeForMobile = (
   const listParents = (el: HTMLElement): void => {
     const parents: HTMLElement[] = []
     let pointer = el
-    while (pointer.parentElement) {
+    while (pointer.parentElement && pointer.tagName.toLowerCase() !== 'body') {
       parents.push(pointer.parentElement)
       pointer = pointer.parentElement
     }
-    console.log('SVG Parents', ...parents.map((el) => el.tagName))
+    console.log('SVG Parents', ...parents.map((el) => el.tagName.toLowerCase()))
   }
 
   if (isHtmlElement(node)) {
     const tagName = node.tagName.toLowerCase()
-    const isSvg = tagName === 'svg'
-    const containsSvg = !!node.querySelector('svg')
-    const isTopLevelSvgWrapper =
-      parentsHaveSvgWrapper === false && (containsSvg || isSvg)
-    if (isTopLevelSvgWrapper) {
-      node.classList.add('relative')
-    }
 
-    const newChildren = Array.from(node.childNodes).flatMap((node) =>
-      fixNodeForMobile(
-        node,
-        isInsideHorizontalScrollable,
-        parentsHaveSvgWrapper || isTopLevelSvgWrapper
-      )
-    )
-
-    if (!isInsideHorizontalScrollable) {
+    if (isInsideHorizontalScrollable === false) {
       switch (tagName) {
         case 'ol':
         case 'ul':
         case 'pre':
         case 'table':
+          const newChildren1 = Array.from(node.childNodes).flatMap((node) =>
+            fixNodeForMobile(node, true)
+          )
           // these can be too wide, so we wrap them in a scrollable area
-          node.replaceChildren(...newChildren)
-          const hs1 = getHorizontalScrollable(node)
-          hs1.appendChild(node)
-          return hs1
+          node.replaceChildren(...newChildren1)
+          const horizontalScrollable1 = getHorizontalScrollable(node)
+          horizontalScrollable1.appendChild(node)
+          return horizontalScrollable1
         case 'svg':
           // these can be too wide, so we'll wrap them in a scrollable area
-          // but these can also be indented ie an SVG displayed in a <li>
-          // so the scrollable area would be offset too which doesn't look
-          // nice.
-          // so we'll pull the scrollable area out of Normal Flow using absolute
-          // and put it on the left, but insert a placeholder of the same size
-          // so as to not interupt the flow.
+          // but because SVGs are often inline deeper in the document they
+          // come with some indentation to the left, so we can't use the
+          // full viewport width for the SVG. This indentation makes Red's
+          // rendering in a <HorizontalScrollable> indented too.
+          // <HorizontalScrollable> more affects mobile (it doesn't render
+          // anything if the content is visible within the viewport, ie on
+          // larger screens) and arguably the better mobile UX for that would
+          // be full screen width.
           //
-          const svg = node as unknown as SVGElement
-          listParents(svg as unknown as HTMLElement)
-          if (!svg) {
+          // so we'll assist Red by suggesting a `position:absolute;left:0px`
+          // HorizontalScrollable that is full width. Because this pulls the
+          // SVG out of regular browser layout flow we'll also provide the
+          // dimensions for a placeholder, taken from the SVG's dimensions.
+          // This is so that Red can insert blank space where the SVG was in
+          // the layout flow, so that following Nodes don't render under the
+          // newly `position:absolute` SVG.
+          listParents(node as unknown as HTMLElement)
+          if (!node) {
             console.error({ node })
             throw Error(`Expected SVG but got node (see console) ${node}`)
           }
-
-          svg.replaceChildren(...newChildren)
-          const widthAttr = svg.getAttribute('height')
+          const newChildren2 = Array.from(node.childNodes).flatMap((node) =>
+            fixNodeForMobile(node, true)
+          )
+          node.replaceChildren(...newChildren2)
+          const widthAttr = node.getAttribute('height')
           const widthPx = parseFloat(widthAttr ?? '')
-          const heightAttr = svg.getAttribute('height')
+          const heightAttr = node.getAttribute('height')
           const heightPx = parseFloat(heightAttr ?? '')
           if (Number.isNaN(widthPx) || Number.isNaN(heightPx)) {
             console.error(
@@ -370,6 +367,9 @@ const fixNodeForMobile = (
       }
     }
 
+    const newChildren = Array.from(node.childNodes).flatMap((node) =>
+      fixNodeForMobile(node, isInsideHorizontalScrollable)
+    )
     node.replaceChildren(...newChildren)
     return node
   }
