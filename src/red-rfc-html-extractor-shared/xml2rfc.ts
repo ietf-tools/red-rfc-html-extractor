@@ -1,3 +1,4 @@
+import { convertCSSUnit, parseCSSLength } from '../css-unit-converter/index.ts'
 import { getDOMParser, getInnerText, isHtmlElement } from '../dom.ts'
 import type { MaxPreformattedLineLengthSchemaType } from '../rfc-validators.ts'
 import { blankRfcCommon } from '../rfc.ts'
@@ -295,11 +296,20 @@ const fixNodeForMobile = (
 
   const getSvgDimensions = (
     el: HTMLElement
-  ): { widthPx: number; heightPx: number } => {
+  ): { widthPx: number; heightPx: number } => {    
+    const parseLength = (lengthAttr: string | null): number => {
+      if(lengthAttr === null) return Number.NaN
+      const parts = parseCSSLength(lengthAttr)
+      if(parts === null) {
+        throw Error(`Unable to parse ${JSON.stringify(lengthAttr)}`)
+      }
+      const [length, unit] = parts
+      return convertCSSUnit(length, unit, 'px')
+    }
     const widthAttr = el.getAttribute('width')
-    let widthPx = parseFloat(widthAttr ?? '')
+    let widthPx = parseLength(widthAttr)
     const heightAttr = el.getAttribute('height')
-    let heightPx = parseFloat(heightAttr ?? '')
+    let heightPx = parseLength(heightAttr ?? '')
     if (Number.isNaN(widthPx) || Number.isNaN(heightPx)) {
       // fallback to using viewBox
       const viewBoxAttr = el.getAttribute('viewBox')
@@ -315,6 +325,7 @@ const fixNodeForMobile = (
           Number.isNaN(x2) ||
           Number.isNaN(y2)
         ) {
+          // fallback to default value
           console.error(
             'Could not find width/height of SVG. This could break mobile layout',
             { widthAttr, heightAttr, viewBoxAttr }
