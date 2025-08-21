@@ -266,7 +266,7 @@ const fixNodeForMobile = (
 ): Node | Node[] => {
   const getHorizontalScrollable = (
     htmlElement: HTMLElement,
-    absolute?: { childWidthPx: number; childHeightPx: number }
+    absolute?: { widthAttr: string; heightAttr: string }
   ) => {
     const horizontalScrollable = htmlElement.ownerDocument.createElement('div')
     horizontalScrollable.setAttribute('data-component', 'HorizontalScrollable')
@@ -277,11 +277,11 @@ const fixNodeForMobile = (
       )
       horizontalScrollable.setAttribute(
         'data-component-childwidth',
-        absolute.childWidthPx.toString()
+        absolute.widthAttr.toString()
       )
       horizontalScrollable.setAttribute(
         'data-component-childheight',
-        absolute.childHeightPx.toString()
+        absolute.heightAttr.toString()
       )
     }
     // these can be too wide, so we wrap them to make a scrollable area
@@ -296,20 +296,27 @@ const fixNodeForMobile = (
 
   const getSvgDimensions = (
     el: HTMLElement
-  ): { widthPx: number; heightPx: number } => {    
+  ): {
+    widthAttr: string
+    widthPx: number
+    heightAttr: string
+    heightPx: number
+  } => {
     const parseLength = (lengthAttr: string | null): number => {
-      if(lengthAttr === null) return Number.NaN
+      if (lengthAttr === null) return Number.NaN
       const parts = parseCSSLength(lengthAttr)
-      if(parts === null) {
+      if (parts === null) {
         throw Error(`Unable to parse ${JSON.stringify(lengthAttr)}`)
       }
       const [length, unit] = parts
       return convertCSSUnit(length, unit, 'px')
     }
+    const DEFAULT_WIDTH = 320
+    const DEFAULT_HEIGHT = 320
     const widthAttr = el.getAttribute('width')
     let widthPx = parseLength(widthAttr)
     const heightAttr = el.getAttribute('height')
-    let heightPx = parseLength(heightAttr ?? '')
+    let heightPx = parseLength(heightAttr)
     if (Number.isNaN(widthPx) || Number.isNaN(heightPx)) {
       // fallback to using viewBox
       const viewBoxAttr = el.getAttribute('viewBox')
@@ -331,15 +338,32 @@ const fixNodeForMobile = (
             { widthAttr, heightAttr, viewBoxAttr }
           )
           return {
-            widthPx: 320,
-            heightPx: 320
+            widthAttr: DEFAULT_WIDTH.toString(),
+            widthPx: DEFAULT_WIDTH,
+            heightAttr: DEFAULT_HEIGHT.toString(),
+            heightPx: DEFAULT_HEIGHT
           }
         }
         widthPx = x2 - x1
         heightPx = y2 - y1
+        return {
+          widthAttr: widthPx.toString(),
+          widthPx,
+          heightAttr: heightPx.toString(),
+          heightPx
+        }
       }
     }
-    return { widthPx, heightPx }
+
+    widthPx = Number.isNaN(widthPx) ? DEFAULT_WIDTH : widthPx
+    heightPx = Number.isNaN(heightPx) ? DEFAULT_HEIGHT : heightPx
+
+    return {
+      widthAttr: widthAttr !== null ? widthAttr : widthPx.toString(),
+      widthPx,
+      heightAttr: heightAttr !== null ? heightAttr : heightPx.toString(),
+      heightPx
+    }
   }
 
   if (isHtmlElement(node)) {
@@ -382,14 +406,16 @@ const fixNodeForMobile = (
             console.error({ node })
             throw Error(`Expected SVG but got node (see console) ${node}`)
           }
-          // Allows 100px for indentation on a 320px wide display. Most indendation
-          // is only about that deep, so we can just display the SVG if it's small.
-          // this is so that small icons can have enough space to be displayed as-is.
+          // Only use HorizontalScrollable for larger SVGs.
+          // this is so that small icons can have enough space to be displayed inline
+          // without tampering.
+          // Allows 100px for indentation on a 320px wide display:
           const NEEDS_HORIZONTALSCROLLABLE_THRESHOLD_PX = 220
 
-          const { widthPx, heightPx } = getSvgDimensions(node)
-          node.setAttribute('width', widthPx.toString()) // clobber height because values can have units like `pt` see RFC9043
-          node.setAttribute('height', heightPx.toString())
+          const { widthAttr, widthPx, heightAttr, heightPx } =
+            getSvgDimensions(node)
+          node.setAttribute('width', widthAttr)
+          node.setAttribute('height', heightAttr)
           if (widthPx > NEEDS_HORIZONTALSCROLLABLE_THRESHOLD_PX) {
             const newChildren2 = Array.from(node.childNodes).flatMap((node) =>
               fixNodeForMobile(node, true)
@@ -398,8 +424,8 @@ const fixNodeForMobile = (
             node.style.marginLeft = 'var(--layout-bleed-left, 10px)'
             node.style.marginRight = 'var(--layout-bleed-right, 10px)'
             const hs2 = getHorizontalScrollable(node, {
-              childWidthPx: widthPx,
-              childHeightPx: heightPx
+              widthAttr,
+              heightAttr
             })
             hs2.appendChild(node)
             console.log(' - big SVG', widthPx, heightPx)
