@@ -413,18 +413,16 @@ const fixNodeForMobile = (
 
           const { widthCSSLength, widthPx, heightCSSLength, heightPx } =
             getSvgDimensions(node)
+
           node.setAttribute('width', widthCSSLength)
           node.setAttribute('height', heightCSSLength)
+          
           if (widthPx > NEEDS_HORIZONTALSCROLLABLE_THRESHOLD_PX) {
             const newChildren2 = Array.from(node.childNodes).flatMap((node) =>
               fixNodeForMobile(node, true)
             )
             node.replaceChildren(...newChildren2)
-            node.style.marginTop = 'var(--layout-bleed-right, 10px)'
-            node.style.marginRight = '10px'
-            node.style.marginBottom = '10px'
-            node.style.marginLeft = 'var(--layout-bleed-left, 10px)'
-            const hs2 = getHorizontalScrollable(node, {
+             const hs2 = getHorizontalScrollable(node, {
               widthCSSLength,
               heightCSSLength
             })
