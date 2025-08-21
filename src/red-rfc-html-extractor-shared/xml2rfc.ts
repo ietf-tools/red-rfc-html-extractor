@@ -296,7 +296,7 @@ const fixNodeForMobile = (
   const getSvgDimensions = (
     el: HTMLElement
   ): { widthPx: number; heightPx: number } => {
-    const widthAttr = el.getAttribute('height')
+    const widthAttr = el.getAttribute('width')
     let widthPx = parseFloat(widthAttr ?? '')
     const heightAttr = el.getAttribute('height')
     let heightPx = parseFloat(heightAttr ?? '')
@@ -377,6 +377,8 @@ const fixNodeForMobile = (
           const NEEDS_HORIZONTALSCROLLABLE_THRESHOLD_PX = 220
 
           const { widthPx, heightPx } = getSvgDimensions(node)
+          node.setAttribute('width', widthPx.toString()) // clobber height because values can have units like `pt` see RFC9043
+          node.setAttribute('height', heightPx.toString())
           if (widthPx > NEEDS_HORIZONTALSCROLLABLE_THRESHOLD_PX) {
             const newChildren2 = Array.from(node.childNodes).flatMap((node) =>
               fixNodeForMobile(node, true)
