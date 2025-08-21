@@ -253,12 +253,6 @@ export const getXml2RfcRfcDocument = (dom: Document): Node[] => {
 /**
  * The HTML needs minor changes to ensure mobile rendering when rendered on
  * the rfc-editor site.
- *
- * Tailwind's grepper won't be able to see these CSS classes so we rely on
- * the same classes already existing in the generated CSS bundle (because they
- * were already used elsewhere, in Red).
- *
- * If using unpopular classes this would need a different approach.
  */
 const fixNodeForMobile = (
   node: Node,
@@ -284,13 +278,6 @@ const fixNodeForMobile = (
         absolute.heightCSSLength.toString()
       )
     }
-    // these can be too wide, so we wrap them to make a scrollable area
-    horizontalScrollable.classList.add(
-      // see above docstring about Tailwind classes
-      'w-full',
-      'max-w-screen',
-      'overflow-x-auto'
-    )
     return horizontalScrollable
   }
 
@@ -441,17 +428,22 @@ const fixNodeForMobile = (
               widthCSSLength,
               heightCSSLength
             })
+
             if (node.parentElement) {
-              if (node.parentElement.classList.contains('alignLeft')) {
-                node.parentElement.classList.remove('alignLeft')
-                hs2.classList.add('alignLeft')
-              } else if (node.parentElement.classList.contains('alignCenter')) {
-                node.parentElement.classList.remove('alignCenter')
-                hs2.classList.add('alignCenter')
-              } else if (node.parentElement.classList.contains('alignRight')) {
-                node.parentElement.classList.remove('alignRight')
-                hs2.classList.add('alignRight')
+              const LEFT = 'alignLeft'
+              const CENTER = 'alignCenter'
+              const RIGHT = 'alignRight'
+              if (node.parentElement.classList.contains(LEFT)) {
+                node.parentElement.classList.remove(LEFT)
+                hs2.classList.add(LEFT)                
+              } else if (node.parentElement.classList.contains(CENTER)) {
+                node.parentElement.classList.remove(CENTER)
+                hs2.classList.add(CENTER)
+              } else if (node.parentElement.classList.contains(RIGHT)) {
+                node.parentElement.classList.remove(RIGHT)
+                hs2.classList.add(RIGHT)
               }
+              console.log(" - horizontalscrollable ", hs2.className)
             }
             hs2.appendChild(node)
             console.log(' - big SVG', widthPx, heightPx)
