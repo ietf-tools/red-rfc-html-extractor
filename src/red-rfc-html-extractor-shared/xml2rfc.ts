@@ -266,7 +266,7 @@ const fixNodeForMobile = (
 ): Node | Node[] => {
   const getHorizontalScrollable = (
     htmlElement: HTMLElement,
-    absolute?: { widthAttr: string; heightAttr: string }
+    absolute?: { widthCSSLength: string; heightCSSLength: string }
   ) => {
     const horizontalScrollable = htmlElement.ownerDocument.createElement('div')
     horizontalScrollable.setAttribute('data-component', 'HorizontalScrollable')
@@ -277,11 +277,11 @@ const fixNodeForMobile = (
       )
       horizontalScrollable.setAttribute(
         'data-component-childwidth',
-        absolute.widthAttr.toString()
+        absolute.widthCSSLength.toString()
       )
       horizontalScrollable.setAttribute(
         'data-component-childheight',
-        absolute.heightAttr.toString()
+        absolute.heightCSSLength.toString()
       )
     }
     // these can be too wide, so we wrap them to make a scrollable area
@@ -297,9 +297,9 @@ const fixNodeForMobile = (
   const getSvgDimensions = (
     el: HTMLElement
   ): {
-    widthAttr: string
+    widthCSSLength: string
     widthPx: number
-    heightAttr: string
+    heightCSSLength: string
     heightPx: number
   } => {
     const parseLength = (lengthAttr: string | null): number => {
@@ -313,7 +313,7 @@ const fixNodeForMobile = (
     }
     const ensureUnit = (lengthAttr: string): string => {
       const parts = parseCSSLength(lengthAttr)
-      if(!parts) {
+      if (!parts) {
         throw Error(`Can't parse ${JSON.stringify(lengthAttr)} in ensureUnit`)
       }
       return `${parts[0]}${parts[1]}`
@@ -346,18 +346,18 @@ const fixNodeForMobile = (
             { widthAttr, heightAttr, viewBoxAttr }
           )
           return {
-            widthAttr: ensureUnit(DEFAULT_WIDTH_PX.toString()),
+            widthCSSLength: ensureUnit(DEFAULT_WIDTH_PX.toString()),
             widthPx: DEFAULT_WIDTH_PX,
-            heightAttr: ensureUnit(DEFAULT_HEIGHT_PX.toString()),
+            heightCSSLength: ensureUnit(DEFAULT_HEIGHT_PX.toString()),
             heightPx: DEFAULT_HEIGHT_PX
           }
         }
         widthPx = x2 - x1
         heightPx = y2 - y1
         return {
-          widthAttr: ensureUnit(widthPx.toString()),
+          widthCSSLength: ensureUnit(widthPx.toString()),
           widthPx,
-          heightAttr: ensureUnit(heightPx.toString()),
+          heightCSSLength: ensureUnit(heightPx.toString()),
           heightPx
         }
       }
@@ -367,9 +367,13 @@ const fixNodeForMobile = (
     heightPx = Number.isNaN(heightPx) ? DEFAULT_HEIGHT_PX : heightPx
 
     return {
-      widthAttr: ensureUnit(widthAttr !== null ? widthAttr : widthPx.toString()),
+      widthCSSLength: ensureUnit(
+        widthAttr !== null ? widthAttr : widthPx.toString()
+      ),
       widthPx,
-      heightAttr: ensureUnit(heightAttr !== null ? heightAttr : heightPx.toString()),
+      heightCSSLength: ensureUnit(
+        heightAttr !== null ? heightAttr : heightPx.toString()
+      ),
       heightPx
     }
   }
@@ -420,21 +424,35 @@ const fixNodeForMobile = (
           // Allows 100px for indentation on a 320px wide display:
           const NEEDS_HORIZONTALSCROLLABLE_THRESHOLD_PX = 220
 
-          const { widthAttr, widthPx, heightAttr, heightPx } =
+          const { widthCSSLength, widthPx, heightCSSLength, heightPx } =
             getSvgDimensions(node)
-          node.setAttribute('width', widthAttr)
-          node.setAttribute('height', heightAttr)
+          node.setAttribute('width', widthCSSLength)
+          node.setAttribute('height', heightCSSLength)
           if (widthPx > NEEDS_HORIZONTALSCROLLABLE_THRESHOLD_PX) {
             const newChildren2 = Array.from(node.childNodes).flatMap((node) =>
               fixNodeForMobile(node, true)
             )
             node.replaceChildren(...newChildren2)
+            node.style.marginTop = 'var(--layout-bleed-right, 10px)'
+            node.style.marginRight = '10px'
+            node.style.marginBottom = '10px'
             node.style.marginLeft = 'var(--layout-bleed-left, 10px)'
-            node.style.marginRight = 'var(--layout-bleed-right, 10px)'
             const hs2 = getHorizontalScrollable(node, {
-              widthAttr,
-              heightAttr
+              widthCSSLength,
+              heightCSSLength
             })
+            if (node.parentElement) {
+              if (node.parentElement.classList.contains('alignLeft')) {
+                node.parentElement.classList.remove('alignLeft')
+                hs2.classList.add('alignLeft')
+              } else if (node.parentElement.classList.contains('alignCenter')) {
+                node.parentElement.classList.remove('alignCenter')
+                hs2.classList.add('alignCenter')
+              } else if (node.parentElement.classList.contains('alignRight')) {
+                node.parentElement.classList.remove('alignRight')
+                hs2.classList.add('alignRight')
+              }
+            }
             hs2.appendChild(node)
             console.log(' - big SVG', widthPx, heightPx)
             return hs2
