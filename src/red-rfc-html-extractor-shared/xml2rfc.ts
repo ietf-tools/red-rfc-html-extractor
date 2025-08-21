@@ -384,6 +384,8 @@ const fixNodeForMobile = (
               fixNodeForMobile(node, true)
             )
             node.replaceChildren(...newChildren2)
+            node.style.marginLeft = 'var(--layout-bleed-left, 10px)'
+            node.style.marginRight = 'var(--layout-bleed-right, 10px)'
             const hs2 = getHorizontalScrollable(node, {
               childWidthPx: widthPx,
               childHeightPx: heightPx
