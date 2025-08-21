@@ -293,17 +293,9 @@ const fixNodeForMobile = (
     return horizontalScrollable
   }
 
-  const listParents = (el: HTMLElement): void => {
-    const parents: HTMLElement[] = []
-    let pointer = el
-    while (pointer.parentElement && pointer.parentElement.tagName.toLowerCase() !== 'body') {
-      parents.push(pointer.parentElement)
-      pointer = pointer.parentElement
-    }
-    console.log(' - SVG parents:', ...parents.map((el) => el.tagName.toLowerCase()))
-  }
-
-  const getSvgDimensions = (el: HTMLElement): { widthPx: number, heightPx: number } => {
+  const getSvgDimensions = (
+    el: HTMLElement
+  ): { widthPx: number; heightPx: number } => {
     const widthAttr = el.getAttribute('height')
     let widthPx = parseFloat(widthAttr ?? '')
     const heightAttr = el.getAttribute('height')
@@ -311,26 +303,30 @@ const fixNodeForMobile = (
     if (Number.isNaN(widthPx) || Number.isNaN(heightPx)) {
       // fallback to using viewBox
       const viewBoxAttr = el.getAttribute('viewBox')
-      if(viewBoxAttr) {
+      if (viewBoxAttr) {
         const [x1Attr, y1Attr, x2Attr, y2Attr] = viewBoxAttr.split(/\s+/)
         const x1 = parseFloat(x1Attr)
         const y1 = parseFloat(y1Attr)
         const x2 = parseFloat(x2Attr)
         const y2 = parseFloat(y2Attr)
-        if (Number.isNaN(x1) || Number.isNaN(y1) || Number.isNaN(x2) || Number.isNaN(y2)) {
+        if (
+          Number.isNaN(x1) ||
+          Number.isNaN(y1) ||
+          Number.isNaN(x2) ||
+          Number.isNaN(y2)
+        ) {
           console.error(
             'Could not find width/height of SVG. This could break mobile layout',
             { widthAttr, heightAttr, viewBoxAttr }
           )
           return {
             widthPx: 320,
-            heightPx: 320,
+            heightPx: 320
           }
         }
         widthPx = x2 - x1
         heightPx = y2 - y1
       }
-      
     }
     return { widthPx, heightPx }
   }
@@ -371,22 +367,36 @@ const fixNodeForMobile = (
           // This is so that Red can insert blank space where the SVG was in
           // the layout flow, so that following Nodes don't render underneath
           // the newly `position:absolute` SVG.
-          listParents(node as unknown as HTMLElement)
           if (!node) {
             console.error({ node })
             throw Error(`Expected SVG but got node (see console) ${node}`)
           }
-          const newChildren2 = Array.from(node.childNodes).flatMap((node) =>
-            fixNodeForMobile(node, true)
-          )
-          node.replaceChildren(...newChildren2)
+          // Allows 100px for indentation on a 320px wide display. Most indendation
+          // is only about that deep, so we can just display the SVG if it's small.
+          // this is so that small icons can have enough space to be displayed as-is.
+          const NEEDS_HORIZONTALSCROLLABLE_THRESHOLD_PX = 220
+
           const { widthPx, heightPx } = getSvgDimensions(node)
-          const hs2 = getHorizontalScrollable(node, {
-            childWidthPx: widthPx,
-            childHeightPx: heightPx
-          })
-          hs2.appendChild(node)
-          return hs2
+          if (widthPx > NEEDS_HORIZONTALSCROLLABLE_THRESHOLD_PX) {
+            const newChildren2 = Array.from(node.childNodes).flatMap((node) =>
+              fixNodeForMobile(node, true)
+            )
+            node.replaceChildren(...newChildren2)
+            const hs2 = getHorizontalScrollable(node, {
+              childWidthPx: widthPx,
+              childHeightPx: heightPx
+            })
+            hs2.appendChild(node)
+            console.log(' - big SVG', widthPx, heightPx)
+            return hs2
+          } else {
+            console.log(' - small SVG', widthPx, heightPx)
+            const newChildren3 = Array.from(node.childNodes).flatMap((node) =>
+              fixNodeForMobile(node, false)
+            )
+            node.replaceChildren(...newChildren3)
+            return node
+          }
       }
     }
 
