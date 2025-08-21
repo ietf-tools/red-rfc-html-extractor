@@ -312,10 +312,12 @@ const fixNodeForMobile = (
       // fallback to using viewBox
       const viewBoxAttr = el.getAttribute('viewBox')
       if(viewBoxAttr) {
-        const [_x1, _y1, x2, y2] = viewBoxAttr.split(/\s+/)
-        widthPx = parseFloat(x2 ?? '')
-        heightPx = parseFloat(y2 ?? '')
-        if (Number.isNaN(widthPx) || Number.isNaN(heightPx)) {
+        const [x1Attr, y1Attr, x2Attr, y2Attr] = viewBoxAttr.split(/\s+/)
+        const x1 = parseFloat(x1Attr)
+        const y1 = parseFloat(y1Attr)
+        const x2 = parseFloat(x2Attr)
+        const y2 = parseFloat(y2Attr)
+        if (Number.isNaN(x1) || Number.isNaN(y1) || Number.isNaN(x2) || Number.isNaN(y2)) {
           console.error(
             'Could not find width/height of SVG. This could break mobile layout',
             { widthAttr, heightAttr, viewBoxAttr }
@@ -325,6 +327,8 @@ const fixNodeForMobile = (
             heightPx: 320,
           }
         }
+        widthPx = x2 - x1
+        heightPx = y2 - y1
       }
       
     }
@@ -350,22 +354,23 @@ const fixNodeForMobile = (
           return horizontalScrollable1
         case 'svg':
           // these can be too wide, so we'll wrap them in a scrollable area
-          // but because SVGs are often inline deeper in the document they
-          // come with some indentation to the left, so we can't use the
-          // full viewport width for the SVG. This indentation makes Red's
-          // rendering in a <HorizontalScrollable> indented too.
-          // <HorizontalScrollable> more affects mobile (it doesn't render
-          // anything if the content is visible within the viewport, ie on
-          // larger screens) and arguably the better mobile UX for that would
-          // be full screen width.
+          // but because SVGs are often inline deeper in the document (ie not a
+          // direct child of <body>) they come with some indentation to the left,
+          // so we can't use the full viewport width for the SVG. This indentation
+          // makes Red's rendering in a <HorizontalScrollable> indented too.
           //
-          // so we'll assist Red by suggesting a `position:absolute;left:0px`
+          // <HorizontalScrollable> mostly affects mobile as most SVGs are small
+          // enough to be visible on a 1920x1080 display, where that component
+          // doesn't render any scroll hint box-shadows.
+          //
+          // So we'll assist Red by suggesting a `position:absolute;left:0px`
           // HorizontalScrollable that is full width. Because this pulls the
           // SVG out of regular browser layout flow we'll also provide the
           // dimensions for a placeholder, taken from the SVG's dimensions.
+          //
           // This is so that Red can insert blank space where the SVG was in
-          // the layout flow, so that following Nodes don't render under the
-          // newly `position:absolute` SVG.
+          // the layout flow, so that following Nodes don't render underneath
+          // the newly `position:absolute` SVG.
           listParents(node as unknown as HTMLElement)
           if (!node) {
             console.error({ node })
