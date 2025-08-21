@@ -318,25 +318,23 @@ const rfcDocumentToPojo = (rfcDocument: Node[]): DocumentPojo => {
  * 2) Many RFCs have absolute hrefs of `https://www.rfc-editor.org/ANYTHING` so
  *    when they hardcode links to prod we'll we'll convert those to `/ANYTHING`. This
  *    also makes these links work relatively on localhost/staging etc.
- * 3) Many RFCs have links to '/rfc/rfcN.html', so —when browsing from 'info/rfcN/'—
- *    users would keep leaving the '/info/*' route and instead browse 'bucket' HTML.
- *    The term 'bucket' means the implementation detail of how the HTML is stored on
- *    a computer somewhere like Amazon S3 or Cloudflare R2 etc. The thing to note is
- *    that it means that URL is intentionally not part of the Nuxt routes with its UI.
- *    This is also how the previous rfc-editor.org website worked, with a site template
- *    in PHP and these RFC files were served directly without HTML templating (afaik).
+ * 3) Many RFCs have links to '/rfc/rfcN.html', so —when browsing from '/info/*'—
+ *    users would keep leaving the '/info/*' route and instead browse '/rfc/*' HTML.
+ *    The '/rfc/*' routes are not part of the Nuxt routes with the new UI.
  *    So there is a high-level question of whether users should be able to follow RFC
- *    link after RFC link while staying within the Nuxt 'info' route’s UI/UX, or whether
- *    we should maintain the original `href` string as-is or reinterpret that as a `href`
- *    to RFC content that appears at a different URL with a different template.
- *    The original 'bucket' HTML is still available for those who prefer it. That's not
+ *    link after RFC link while staying within the Nuxt '/info/*' route’s UI/UX, or
+ *    whether we should maintain the original `href` string as-is, or interpret hrefs
+ *    to RFCs as something we can use to link to 'info' RFCs.
+ * 
+ *    The original '/rfc/*' HTML is still available for those who prefer it. That's not
  *    being taken away.
+ * 
  *    The 'info' route is a ~*NEW*~ UI for browsing RFC content that tries to make
  *    documents more usable by providing a responsive and accessible UI (more zoomable),
- *    with ToC, etc. It's believed that preserving `href`s as-is would would affect users
- *    usage negatively. So it's been decided to change the `href`s to encourage users
- *    to read RFC content within the 'info route, as if it were a mirror of RFC content
- *    and users can always browse the original if they wish.
+ *    with ToC, etc. It's believed that preserving `href`s as-is would would limit users.
+ *    So it's been decided to change the `href`s to encourage users to read RFC content 
+ *    within the '/info/*' route, as if it were a mirror of RFC content, and users can
+ *    always browse the original HTML if they wish.
  * 
  **/
 const convertHrefs = (rfcDocument: Node[], baseUrl: URL): void => {
