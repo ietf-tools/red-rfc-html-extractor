@@ -98,8 +98,10 @@ test('parse css length string into args', () => {
   expect(parseCSSLength('12.3ex')).toEqual([12.3, 'ex'])
 })
 
-test('invalid conversions', function (assert) {
-  var invalid_units = {
+type InvalidUnits = Record<CSSLengthUnit, CSSLengthUnit[]>
+
+test('invalid conversions', () => {
+  const invalidUnits: InvalidUnits = {
     px: [
       'deg',
       'grad',
@@ -140,6 +142,19 @@ test('invalid conversions', function (assert) {
       'dppx'
     ],
     in: [
+      'deg',
+      'grad',
+      'rad',
+      'turn',
+      's',
+      'ms',
+      'Hz',
+      'kHz',
+      'dpi',
+      'dpcm',
+      'dppx'
+    ],
+    ex: [
       'deg',
       'grad',
       'rad',
@@ -354,10 +369,11 @@ test('invalid conversions', function (assert) {
       'Hz',
       'kHz'
     ]
-  }
+  } as const
 
-  for (var unit in invalid_units) {
-    invalid_units[unit].forEach(function (targetUnit) {
+  for (const unit in invalidUnits) {
+    const unitKey = unit as CSSLengthUnit
+    invalidUnits[unitKey].forEach((targetUnit) => {
       expect(() =>
         convertCSSUnit(10, unit as CSSLengthUnit, targetUnit)
       ).toThrow()

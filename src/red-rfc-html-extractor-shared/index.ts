@@ -305,24 +305,39 @@ const rfcDocumentToPojo = (rfcDocument: Node[]): DocumentPojo => {
 }
 
 /**
- * This function converts link `href`s by mutating the Node(s)
+ * This function converts link `href`s by changing (mutating) the given Nodes, by
+ * changing attribute `href` values.
  *
  * 1) Many RFCs have relative hrefs of `./rfcN.html` which resolves differently from
- *    the original `/rfc/rfcN.html` and the new republished path of `/info/rfcN/`
+ *    a page at `/rfc/rfcN.html` and the new republished path of `/info/rfcN/`
  *    (regardless of the trailing slash, the `/info/` will make relative hrefs resolve
  *    differently). Converting the hrefs is very simple as the web standard URL() takes
  *    a 2nd arg to resolve relative links against, so this function resolves relative
  *    paths from `./rfcN.html` to `/rfc/rfcN.html`. So they're still relative hrefs but
- *    relative to the domain, not the path.
+ *    they're relative to the domain, not the path.
  * 2) Many RFCs have absolute hrefs of `https://www.rfc-editor.org/ANYTHING` so
  *    when they hardcode links to prod we'll we'll convert those to `/ANYTHING`. This
  *    also makes these links work relatively on localhost/staging etc.
  * 3) Many RFCs have links to '/rfc/rfcN.html', so —when browsing from 'info/rfcN/'—
- *    users would keep leaving the '/info/*' route and instead browse bucket HTML.
+ *    users would keep leaving the '/info/*' route and instead browse 'bucket' HTML.
+ *    The term 'bucket' means the implementation detail of how the HTML is stored on
+ *    a computer somewhere like Amazon S3 or Cloudflare R2 etc. The thing to note is
+ *    that it means that URL is intentionally not part of the Nuxt routes with its UI.
+ *    This is also how the previous rfc-editor.org website worked, with a site template
+ *    in PHP and these RFC files were served directly without HTML templating (afaik).
  *    So there is a high-level question of whether users should be able to follow RFC
- *    link after RFC link while staying within the Info route’s modern UI/UX, and it's
- *    been decided that the Info route will encourage this by changing some '/rfc/*'
- *    links.
+ *    link after RFC link while staying within the Nuxt 'info' route’s UI/UX, or whether
+ *    we should maintain the original `href` string as-is or reinterpret that as a `href`
+ *    to RFC content that appears at a different URL with a different template.
+ *    The original 'bucket' HTML is still available for those who prefer it. That's not
+ *    being taken away.
+ *    The 'info' route is a ~*NEW*~ UI for browsing RFC content that tries to make
+ *    documents more usable by providing a responsive and accessible UI (more zoomable),
+ *    with ToC, etc. It's believed that preserving `href`s as-is would would affect users
+ *    usage negatively. So it's been decided to change the `href`s to encourage users
+ *    to read RFC content within the 'info route, as if it were a mirror of RFC content
+ *    and users can always browse the original if they wish.
+ * 
  **/
 const convertHrefs = (rfcDocument: Node[], baseUrl: URL): void => {
   const publicSiteUrl = new URL(PUBLIC_SITE)

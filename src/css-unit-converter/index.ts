@@ -50,7 +50,7 @@ const conversions = {
     pc: 1
   },
   ex: {
-    px: 6, // https://stackoverflow.com/questions/918612/what-is-the-value-of-the-css-ex-unit#comment9316381_918623
+    px: 6 // https://stackoverflow.com/questions/918612/what-is-the-value-of-the-css-ex-unit#comment9316381_918623
   },
   // angle
   deg: {
@@ -118,21 +118,25 @@ export type CSSLengthUnit = keyof typeof conversions
 const CSS_LENGTH_REGEX = /^([0-9\.]+)([a-z]+)$/i
 
 export const parseCSSLength = (
-  lengthAttr: string
+  lengthNumberAndCSSUnit: string // eg '12.34px'
 ): [number, CSSLengthUnit] | null => {
   if (
     // if there are no units default to 'px'
-    !lengthAttr.match(/[a-z]/i)) {
-    return [parseFloat(lengthAttr), 'px']
+    !lengthNumberAndCSSUnit.match(/[a-z]/i)
+  ) {
+    return [parseFloat(lengthNumberAndCSSUnit), 'px']
   }
-  const parts = lengthAttr.match(CSS_LENGTH_REGEX)
+  const parts = lengthNumberAndCSSUnit.match(CSS_LENGTH_REGEX)
   if (parts === null) return null
   const length = parseFloat(parts[1])
-  if(Number.isNaN(length)) {
-     return null
+  if (
+    // let's not return NaN's that wouldn't be expected
+    Number.isNaN(length)
+  ) {
+    return null
   }
   const unit = parts[2].trim() as CSSLengthUnit
-  if(unit.length === 0) {
+  if (unit.length === 0) {
     return null
   }
   return [length, unit]
@@ -157,10 +161,11 @@ export const convertCSSUnit = (
       )} sourceUnit ${JSON.stringify(sourceUnit)} `
     )
   }
+  // preceding code attempts to make the following `as number` assignment safe/correct
   // @ts-ignore
   const targetSource = target[sourceUnit] as number
 
-  var converted = targetSource * value
+  const converted = targetSource * value
 
   return converted
 }
