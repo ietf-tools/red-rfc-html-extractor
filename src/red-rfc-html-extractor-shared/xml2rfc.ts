@@ -303,6 +303,34 @@ const fixNodeForMobile = (
     console.log(' - SVG parents:', ...parents.map((el) => el.tagName.toLowerCase()))
   }
 
+  const getSvgDimensions = (el: HTMLElement): { widthPx: number, heightPx: number } => {
+    const widthAttr = el.getAttribute('height')
+    let widthPx = parseFloat(widthAttr ?? '')
+    const heightAttr = el.getAttribute('height')
+    let heightPx = parseFloat(heightAttr ?? '')
+    if (Number.isNaN(widthPx) || Number.isNaN(heightPx)) {
+      // fallback to using viewBox
+      const viewBoxAttr = el.getAttribute('viewBox')
+      if(viewBoxAttr) {
+        const [_x1, _y1, x2, y2] = viewBoxAttr.split(/\s+/)
+        widthPx = parseFloat(x2 ?? '')
+        heightPx = parseFloat(y2 ?? '')
+        if (Number.isNaN(widthPx) || Number.isNaN(heightPx)) {
+          console.error(
+            'Could not find width/height of SVG. This could break mobile layout',
+            { widthAttr, heightAttr, viewBoxAttr }
+          )
+          return {
+            widthPx: 320,
+            heightPx: 320,
+          }
+        }
+      }
+      
+    }
+    return { widthPx, heightPx }
+  }
+
   if (isHtmlElement(node)) {
     const tagName = node.tagName.toLowerCase()
 
@@ -347,17 +375,7 @@ const fixNodeForMobile = (
             fixNodeForMobile(node, true)
           )
           node.replaceChildren(...newChildren2)
-          const widthAttr = node.getAttribute('height')
-          const widthPx = parseFloat(widthAttr ?? '')
-          const heightAttr = node.getAttribute('height')
-          const heightPx = parseFloat(heightAttr ?? '')
-          if (Number.isNaN(widthPx) || Number.isNaN(heightPx)) {
-            console.error(
-              'Could not find width/height of SVG. This could break mobile layout',
-              { widthAttr, heightAttr }
-            )
-            return node
-          }
+          const { widthPx, heightPx } = getSvgDimensions(node)
           const hs2 = getHorizontalScrollable(node, {
             childWidthPx: widthPx,
             childHeightPx: heightPx
