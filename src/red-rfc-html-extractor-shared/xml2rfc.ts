@@ -311,8 +311,16 @@ const fixNodeForMobile = (
       const [length, unit] = parts
       return convertCSSUnit(length, unit, 'px')
     }
-    const DEFAULT_WIDTH = 320
-    const DEFAULT_HEIGHT = 320
+    const ensureUnit = (lengthAttr: string): string => {
+      const parts = parseCSSLength(lengthAttr)
+      if(!parts) {
+        throw Error(`Can't parse ${JSON.stringify(lengthAttr)} in ensureUnit`)
+      }
+      return `${parts[0]}${parts[1]}`
+    }
+
+    const DEFAULT_WIDTH_PX = 320
+    const DEFAULT_HEIGHT_PX = 320
     const widthAttr = el.getAttribute('width')
     let widthPx = parseLength(widthAttr)
     const heightAttr = el.getAttribute('height')
@@ -338,30 +346,30 @@ const fixNodeForMobile = (
             { widthAttr, heightAttr, viewBoxAttr }
           )
           return {
-            widthAttr: DEFAULT_WIDTH.toString(),
-            widthPx: DEFAULT_WIDTH,
-            heightAttr: DEFAULT_HEIGHT.toString(),
-            heightPx: DEFAULT_HEIGHT
+            widthAttr: ensureUnit(DEFAULT_WIDTH_PX.toString()),
+            widthPx: DEFAULT_WIDTH_PX,
+            heightAttr: ensureUnit(DEFAULT_HEIGHT_PX.toString()),
+            heightPx: DEFAULT_HEIGHT_PX
           }
         }
         widthPx = x2 - x1
         heightPx = y2 - y1
         return {
-          widthAttr: widthPx.toString(),
+          widthAttr: ensureUnit(widthPx.toString()),
           widthPx,
-          heightAttr: heightPx.toString(),
+          heightAttr: ensureUnit(heightPx.toString()),
           heightPx
         }
       }
     }
 
-    widthPx = Number.isNaN(widthPx) ? DEFAULT_WIDTH : widthPx
-    heightPx = Number.isNaN(heightPx) ? DEFAULT_HEIGHT : heightPx
+    widthPx = Number.isNaN(widthPx) ? DEFAULT_WIDTH_PX : widthPx
+    heightPx = Number.isNaN(heightPx) ? DEFAULT_HEIGHT_PX : heightPx
 
     return {
-      widthAttr: widthAttr !== null ? widthAttr : widthPx.toString(),
+      widthAttr: ensureUnit(widthAttr !== null ? widthAttr : widthPx.toString()),
       widthPx,
-      heightAttr: heightAttr !== null ? heightAttr : heightPx.toString(),
+      heightAttr: ensureUnit(heightAttr !== null ? heightAttr : heightPx.toString()),
       heightPx
     }
   }
