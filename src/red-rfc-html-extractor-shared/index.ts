@@ -416,13 +416,12 @@ const ensureWordBreaks = (rfcDocument: Node[]): void => {
       }
 
       const words = textContent.split(/\b/)
-      const WORD_WBR_THRESHOLD_CHARS_LENGTH = 16
-      const INSERT_WBR_EVERY_CHARS_LENGTH = 10
+      const REQUIRE_WORDBREAK_AFTER_CHARS_LENGTH = 10
 
       const textAndWordbreaks = words
         .flatMap((word): Node | Node[] => {
-          if (word.length > WORD_WBR_THRESHOLD_CHARS_LENGTH) {
-            const wordParts = chunkString(word, INSERT_WBR_EVERY_CHARS_LENGTH)
+          if (word.length > REQUIRE_WORDBREAK_AFTER_CHARS_LENGTH) {
+            const wordParts = chunkString(word, REQUIRE_WORDBREAK_AFTER_CHARS_LENGTH)
             return wordParts.flatMap((wordPart) => [
               node.ownerDocument.createTextNode(wordPart),
               node.ownerDocument.createElement('wbr')
