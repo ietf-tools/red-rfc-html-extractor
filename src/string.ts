@@ -6,7 +6,7 @@ const COLONSLASHSLASH = '://'
  * Will split string as often as possible (at certain chars)
  * while also splitting at a maxChunkLength
  **/
-export const chunkString = (str: string, maxChunkLength: number) => {
+export const chunkString = (str: string, maxChunkLength: number): string[] => {
   const chunks = []
   let out = str
   const protocolIndex = out.indexOf(COLONSLASHSLASH)
@@ -17,7 +17,7 @@ export const chunkString = (str: string, maxChunkLength: number) => {
   const nonWordChars = getAllIndexes(
     out,
     // match any char that we can insert a word break at
-    /[^a-zA-Z0-9]+/g
+    /[@\\\/:&_\-=\(\)\.\?%]+/g
   )
   const camelCaseIndexes = getAllIndexes(
     out,
@@ -27,8 +27,12 @@ export const chunkString = (str: string, maxChunkLength: number) => {
     // adjust index to be middle of camelCase
     (index) => index + 1
   )
-  const breakIndexes = uniq([...nonWordChars, ...camelCaseIndexes])
+  const breakIndexes = uniq([...nonWordChars, ...camelCaseIndexes]).filter(
+    // don't split on 0
+    (index) => index !== 0
+  )
   breakIndexes.sort((a, b) => a - b)
+
   chunks.push(
     ...breakIndexes.map((strIndex, arrIndex) => {
       if (arrIndex === 0) {

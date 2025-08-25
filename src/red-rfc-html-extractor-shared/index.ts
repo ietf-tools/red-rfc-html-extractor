@@ -417,9 +417,10 @@ const ensureWordBreaks = (rfcDocument: Node[]): void => {
       if (parents.includes('pre') || parents.includes('svg')) {
         return
       }
-      
+
       const words = textContent.split(/\b/)
       const REQUIRE_WORDBREAK_AFTER_CHARS_LENGTH = 16
+      const WORD_BREAK_ELEMENT = 'wbr'
 
       const textAndWordbreaks = words
         .flatMap((word): Node | Node[] => {
@@ -428,35 +429,44 @@ const ensureWordBreaks = (rfcDocument: Node[]): void => {
               word,
               REQUIRE_WORDBREAK_AFTER_CHARS_LENGTH
             )
-            return wordParts.flatMap((wordPart) => [
-              node.ownerDocument.createTextNode(wordPart),
-              node.ownerDocument.createElement(
-                // https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/wbr
-                'wbr'
-              )
-            ])
+            return wordParts.flatMap((wordPart) => {
+              if (wordPart.length === 0) {
+                return []
+              }
+
+              return [
+                node.ownerDocument.createTextNode(wordPart),
+                node.ownerDocument.createElement(
+                  // https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/wbr
+                  WORD_BREAK_ELEMENT
+                )
+              ]
+            })
           }
           return node.ownerDocument.createTextNode(word)
         })
         .reduce((acc, node) => {
-          if (acc.length > 0) {
-            const lastNode = acc[acc.length - 1]
-            if (isTextNode(node) && isTextNode(lastNode)) {
-              // merge adjacent text nodes if possible
-              // because after splitting on words
-              // there will be a lot of contiguous
-              // text nodes
-              const { textContent } = node
-              if (textContent !== null) {
-                lastNode.textContent =
-                  (lastNode.textContent ?? '') + textContent
+          const lastNode = acc[acc.length - 1]
+
+          if (isTextNode(node)) {
+            const { textContent } = node
+            if (textContent && textContent.length > 0) {
+              if (isTextNode(lastNode)) {
+                // merge adjacent text nodes if possible
+                // because after splitting on words
+                // there will be a lot of contiguous
+                // text nodes
+                lastNode.textContent = `${
+                  lastNode.textContent ?? ''
+                }${textContent}`
+              } else {
+                acc.push(node)
               }
-            } else {
-              acc.push(node)
             }
           } else {
             acc.push(node)
           }
+
           return acc
         }, [] as Node[])
 
