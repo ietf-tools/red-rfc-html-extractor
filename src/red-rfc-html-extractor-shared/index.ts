@@ -28,6 +28,7 @@ import {
   parseXml2RfcBody,
   parseXml2RfcHead
 } from './xml2rfc.ts'
+import { chunkString } from '../string.ts'
 
 const SVG_STYLE_ATTRIBUTES = [
   'role',
@@ -116,7 +117,7 @@ export const fetchSourceRfcHtml = async (
         'preserveAspectRatio',
         ...SVG_STYLE_ATTRIBUTES
       ],
-      'desc': [...SVG_STYLE_ATTRIBUTES],
+      desc: [...SVG_STYLE_ATTRIBUTES],
       use: [
         'x',
         'y',
@@ -277,7 +278,7 @@ const sniffRfcBucketHtmlType = (
 }
 
 const rfcDocumentToPojo = (rfcDocument: Node[]): DocumentPojo => {
-  const walk = (node: Node): NodePojo | undefined => {
+  const walk = (node: Node): NodePojo | NodePojo[] | undefined => {
     if (isHtmlElement(node)) {
       return {
         type: 'Element',
@@ -286,13 +287,53 @@ const rfcDocumentToPojo = (rfcDocument: Node[]): DocumentPojo => {
         // 2) the html element nodeName (eg 'a' or 'pre')
         nodeName: node.dataset.component ?? node.nodeName.toLowerCase(),
         attributes: elementAttributesToObject(node.attributes),
-        children: Array.from(node.childNodes).map(walk).filter(isNodePojo)
+        children: Array.from(node.childNodes).flatMap(walk).filter(isNodePojo)
       }
     } else if (isTextNode(node)) {
-      return {
-        type: 'Text',
-        textContent: node.textContent ?? ''
-      }
+      const { textContent } = node
+      if (!textContent) return undefined
+
+      const words = textContent.split(/\b/)
+      const WORD_WBR_THRESHOLD_CHARS_LENGTH = 16
+      const INSERT_WBR_EVERY_CHARS_LENGTH = 10
+
+      return words
+        .flatMap((word): NodePojo | NodePojo[] => {
+          if (word.length > WORD_WBR_THRESHOLD_CHARS_LENGTH) {
+            return chunkString(word, INSERT_WBR_EVERY_CHARS_LENGTH).flatMap(
+              (wordPart): NodePojo[] => [
+                {
+                  type: 'Text',
+                  textContent: wordPart
+                },
+                {
+                  type: 'Element',
+                  nodeName: 'wbr',
+                  attributes: {},
+                  children: []
+                }
+              ]
+            )
+          }
+          return {
+            type: 'Text',
+            textContent: word
+          }
+        })
+        .reduce((acc, node) => {
+          if (acc.length > 0) {
+            const lastNode = acc[acc.length - 1]
+            if (node.type === 'Text' && lastNode.type === 'Text') {
+              // merge text nodes
+              lastNode.textContent += node.textContent
+            } else {
+              acc.push(node)
+            }
+          } else {
+            acc.push(node)
+          }
+          return acc
+        }, [] as NodePojo[])
     } else if (isCommentNode(node)) {
       return undefined
     }
@@ -301,7 +342,7 @@ const rfcDocumentToPojo = (rfcDocument: Node[]): DocumentPojo => {
     throw Error(`${errorTitle}. See console for details.`)
   }
 
-  return rfcDocument.map(walk).filter(isNodePojo)
+  return rfcDocument.flatMap(walk).filter(isNodePojo)
 }
 
 /**
@@ -325,17 +366,17 @@ const rfcDocumentToPojo = (rfcDocument: Node[]): DocumentPojo => {
  *    link after RFC link while staying within the Nuxt '/info/*' route’s UI/UX, or
  *    whether we should maintain the original `href` string as-is, or interpret hrefs
  *    to RFCs as something we can use to link to 'info' RFCs.
- * 
+ *
  *    The original '/rfc/*' HTML is still available for those who prefer it. That's not
  *    being taken away.
- * 
+ *
  *    The 'info' route is a ~*NEW*~ UI for browsing RFC content that tries to make
  *    documents more usable by providing a responsive and accessible UI (more zoomable),
  *    with ToC, etc. It's believed that preserving `href`s as-is would would limit users.
- *    So it's been decided to change the `href`s to encourage users to read RFC content 
+ *    So it's been decided to change the `href`s to encourage users to read RFC content
  *    within the '/info/*' route, as if it were a mirror of RFC content, and users can
  *    always browse the original HTML if they wish.
- * 
+ *
  **/
 const convertHrefs = (rfcDocument: Node[], baseUrl: URL): void => {
   const publicSiteUrl = new URL(PUBLIC_SITE)

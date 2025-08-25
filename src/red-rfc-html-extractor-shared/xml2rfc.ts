@@ -518,6 +518,8 @@ export const getXml2RfcMaxLineLength = async (
    *
    * This means that the max line length can vary between touch and touchless
    * interfaces.
+   * 
+   * FIXME: this feature isn't used anymore. delete it.
    */
   const ANCHOR_SUFFIX_CHAR_WIDTH = 3
   const domParser = await getDOMParser()
