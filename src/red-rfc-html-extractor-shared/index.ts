@@ -222,6 +222,7 @@ export const rfcBucketHtmlToRfcDocument = async (
   const baseUrl = new URL(`/rfc/rfc${rfcNumber}.html`, PUBLIC_SITE)
 
   convertHrefs(rfcDocument, baseUrl)
+  ensureWordBreaks(rfcDocument)
 
   const response: RfcBucketHtmlDocument = {
     rfc: rfcAndToc.rfc,
@@ -291,49 +292,13 @@ const rfcDocumentToPojo = (rfcDocument: Node[]): DocumentPojo => {
       }
     } else if (isTextNode(node)) {
       const { textContent } = node
-      if (!textContent) return undefined
-
-      const words = textContent.split(/\b/)
-      const WORD_WBR_THRESHOLD_CHARS_LENGTH = 16
-      const INSERT_WBR_EVERY_CHARS_LENGTH = 10
-
-      return words
-        .flatMap((word): NodePojo | NodePojo[] => {
-          if (word.length > WORD_WBR_THRESHOLD_CHARS_LENGTH) {
-            return chunkString(word, INSERT_WBR_EVERY_CHARS_LENGTH).flatMap(
-              (wordPart): NodePojo[] => [
-                {
-                  type: 'Text',
-                  textContent: wordPart
-                },
-                {
-                  type: 'Element',
-                  nodeName: 'wbr',
-                  attributes: {},
-                  children: []
-                }
-              ]
-            )
-          }
-          return {
-            type: 'Text',
-            textContent: word
-          }
-        })
-        .reduce((acc, node) => {
-          if (acc.length > 0) {
-            const lastNode = acc[acc.length - 1]
-            if (node.type === 'Text' && lastNode.type === 'Text') {
-              // merge text nodes
-              lastNode.textContent += node.textContent
-            } else {
-              acc.push(node)
-            }
-          } else {
-            acc.push(node)
-          }
-          return acc
-        }, [] as NodePojo[])
+      if (textContent === null) {
+        return undefined
+      }
+      return {
+        type: 'Text',
+        textContent
+      }
     } else if (isCommentNode(node)) {
       return undefined
     }
@@ -423,4 +388,75 @@ const convertHrefs = (rfcDocument: Node[], baseUrl: URL): void => {
     }
   }
   return rfcDocument.forEach(walk)
+}
+
+/**
+ * This function splits long words and inserts <wbr> elements
+ *
+ * RFC content has long 'words' (ie, text content of URLs as text nodes) that break mobile layout
+ * because they prevent line wrapping. Using CSS `overflow-wrap: anywhere` mostly worked but it
+ * caused 'orphan' chars eg in table headings it'll linewrap just the 'n' in 'description'.
+ *
+ * This function has a new approach where it inserts <wbr> elements. These <wbr> elements seem to
+ * work better than unicode approaches (zero-width spaces etc) because they aren't copied to the
+ * clipboard.
+ **/
+const ensureWordBreaks = (rfcDocument: Node[]): void => {
+  const walk = (node: Node): void => {
+    if (isHtmlElement(node)) {
+      Array.from(node.childNodes).forEach(walk)
+    } else if (isTextNode(node)) {
+      const { parentElement, textContent } = node
+      if (parentElement === null || textContent === null) {
+        return
+      }
+
+      if (parentElement.nodeName.toLowerCase() === 'pre') {
+        return
+      }
+
+      const words = textContent.split(/\b/)
+      const WORD_WBR_THRESHOLD_CHARS_LENGTH = 16
+      const INSERT_WBR_EVERY_CHARS_LENGTH = 10
+
+      const textAndWordbreaks = words
+        .flatMap((word): Node | Node[] => {
+          if (word.length > WORD_WBR_THRESHOLD_CHARS_LENGTH) {
+            const wordParts = chunkString(word, INSERT_WBR_EVERY_CHARS_LENGTH)
+            return wordParts.flatMap((wordPart) => [
+              node.ownerDocument.createTextNode(wordPart),
+              node.ownerDocument.createElement('wbr')
+            ])
+          }
+          return node.ownerDocument.createTextNode(word)
+        })
+        .reduce((acc, node) => {
+          if (acc.length > 0) {
+            const lastNode = acc[acc.length - 1]
+            if (isTextNode(node) && isTextNode(lastNode)) {
+              // merge adjacent text nodes if possible
+              // because after splitting on words
+              // there will be a lot of contiguous
+              // text nodes
+              const { textContent } = node
+              if (textContent !== null) {
+                lastNode.textContent =
+                  (lastNode.textContent ?? '') + textContent
+              }
+            } else {
+              acc.push(node)
+            }
+          } else {
+            acc.push(node)
+          }
+          return acc
+        }, [] as Node[])
+
+      const fragment = node.ownerDocument.createDocumentFragment()
+      fragment.replaceChildren(...textAndWordbreaks)
+      parentElement.replaceChild(fragment, node)
+    }
+  }
+
+  rfcDocument.forEach(walk)
 }

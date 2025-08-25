@@ -1,3 +1,5 @@
+import { uniq } from 'lodash-es'
+
 const COLONSLASHSLASH = '://'
 
 export const chunkString = (str: string, size: number) => {
@@ -8,17 +10,30 @@ export const chunkString = (str: string, size: number) => {
     chunks.push(out.substring(0, protocolIndex + COLONSLASHSLASH.length))
     out = out.substring(protocolIndex + COLONSLASHSLASH.length)
   }
-  const indexes = getAllIndexes(out, /[@\\\/:]/g)
+  const breakIndexes = uniq([
+    ...getAllIndexes(out,
+      // match any char that we can insert a word break at
+      /[@\\\/:&_\-=\(\)]+/g),
+    ...getAllIndexes(
+      out,
+      // match camelCase
+      /[a-z][A-Z]/g
+    ).map(
+      // adjust index to be middle of camelCase
+      (index) => index + 1
+    )
+  ])
+  breakIndexes.sort((a, b) => a - b)
   chunks.push(
-    ...indexes.map((strIndex, arrIndex) => {
+    ...breakIndexes.map((strIndex, arrIndex) => {
       if (arrIndex === 0) {
         return out.substring(0, strIndex)
       }
-      return out.substring(indexes[arrIndex - 1] , strIndex)
+      return out.substring(breakIndexes[arrIndex - 1], strIndex)
     })
   )
-  if (indexes.length > 0) {
-    const lastIndex = indexes[indexes.length - 1]
+  if (breakIndexes.length > 0) {
+    const lastIndex = breakIndexes[breakIndexes.length - 1]
     chunks.push(out.substring(lastIndex))
   } else {
     chunks.push(out)
