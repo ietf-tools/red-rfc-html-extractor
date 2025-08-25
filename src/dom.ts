@@ -50,13 +50,10 @@ export const isCommentNode = (maybeComment: unknown): maybeComment is Comment =>
 export const elementAttributesToObject = (
   attributes: NamedNodeMap
 ): Record<string, string> =>
-  Array.from(attributes).reduce(
-    (acc, attribute) => {
-      acc[attribute.name] = attribute.value
-      return acc
-    },
-    {} as Record<string, string>
-  )
+  Array.from(attributes).reduce((acc, attribute) => {
+    acc[attribute.name] = attribute.value
+    return acc
+  }, {} as Record<string, string>)
 
 export const getInnerText = (element: HTMLElement): string => {
   return Array.from(element.childNodes)
@@ -69,4 +66,14 @@ export const getInnerText = (element: HTMLElement): string => {
       return ''
     })
     .join('')
+}
+
+export const getParentElementNodeNames = (node: Node): string[] => {
+  let pointer = node
+  const parents: string[] = []
+  while (pointer.parentElement !== null && pointer !== pointer.ownerDocument) {
+    parents.push(pointer.nodeName.toLowerCase())
+    pointer = pointer.parentElement
+  }
+  return parents
 }

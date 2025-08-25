@@ -2,6 +2,7 @@ import sanitizeHtml from 'sanitize-html'
 import {
   elementAttributesToObject,
   getDOMParser,
+  getParentElementNodeNames,
   isCommentNode,
   isHtmlElement,
   isTextNode
@@ -411,20 +412,28 @@ const ensureWordBreaks = (rfcDocument: Node[]): void => {
         return
       }
 
-      if (parentElement.nodeName.toLowerCase() === 'pre') {
+      const parents = getParentElementNodeNames(parentElement)
+
+      if (parents.includes('pre') || parents.includes('svg')) {
         return
       }
-
+      
       const words = textContent.split(/\b/)
-      const REQUIRE_WORDBREAK_AFTER_CHARS_LENGTH = 10
+      const REQUIRE_WORDBREAK_AFTER_CHARS_LENGTH = 16
 
       const textAndWordbreaks = words
         .flatMap((word): Node | Node[] => {
           if (word.length > REQUIRE_WORDBREAK_AFTER_CHARS_LENGTH) {
-            const wordParts = chunkString(word, REQUIRE_WORDBREAK_AFTER_CHARS_LENGTH)
+            const wordParts = chunkString(
+              word,
+              REQUIRE_WORDBREAK_AFTER_CHARS_LENGTH
+            )
             return wordParts.flatMap((wordPart) => [
               node.ownerDocument.createTextNode(wordPart),
-              node.ownerDocument.createElement('wbr')
+              node.ownerDocument.createElement(
+                // https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/wbr
+                'wbr'
+              )
             ])
           }
           return node.ownerDocument.createTextNode(word)

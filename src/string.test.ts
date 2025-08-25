@@ -9,7 +9,7 @@ test(`chunkString`, () => {
 
 test(`chunkString with url`, () => {
   const chunks = chunkString('https://www.example.com/path1/path2', 16)
-  expect(chunks).toEqual(['https://', 'www.example.com', '/path1', '/path2'])
+  expect(chunks).toEqual(['https://', 'www', '.example', '.com', '/path1', '/path2'])
 
   const chunks2 = chunkString(
     'https://www.rfc-editor.org/search/rfc_search_detail.php?title=test&pubstatus%5B%5D=Any&pub_date_type=any',
@@ -17,15 +17,20 @@ test(`chunkString with url`, () => {
   )
   expect(chunks2).toEqual([
     'https://',
-    'www.rfc',
-    '-editor.org',
+    'www',
+    '.rfc',
+    '-editor',
+    '.org',
     '/search',
     '/rfc',
     '_search',
-    '_detail.php?titl',
-    'e',
+    '_detail',
+    '.php',
+    '?title',
     '=test',
-    '&pubstatus%5B%5D',
+    '&pubstatus',
+    '%5B',
+    '%5D',
     '=Any',
     '&pub',
     '_date',

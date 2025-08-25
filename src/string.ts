@@ -2,7 +2,11 @@ import { uniq } from 'lodash-es'
 
 const COLONSLASHSLASH = '://'
 
-export const chunkString = (str: string, size: number) => {
+/**
+ * Will split string as often as possible (at certain chars)
+ * while also splitting at a maxChunkLength
+ **/
+export const chunkString = (str: string, maxChunkLength: number) => {
   const chunks = []
   let out = str
   const protocolIndex = out.indexOf(COLONSLASHSLASH)
@@ -10,19 +14,20 @@ export const chunkString = (str: string, size: number) => {
     chunks.push(out.substring(0, protocolIndex + COLONSLASHSLASH.length))
     out = out.substring(protocolIndex + COLONSLASHSLASH.length)
   }
-  const breakIndexes = uniq([
-    ...getAllIndexes(out,
-      // match any char that we can insert a word break at
-      /[@\\\/:&_\-=\(\)]+/g),
-    ...getAllIndexes(
-      out,
-      // match camelCase
-      /[a-z][A-Z]/g
-    ).map(
-      // adjust index to be middle of camelCase
-      (index) => index + 1
-    )
-  ])
+  const nonWordChars = getAllIndexes(
+    out,
+    // match any char that we can insert a word break at
+    /[^a-zA-Z0-9]+/g
+  )
+  const camelCaseIndexes = getAllIndexes(
+    out,
+    // match camelCase
+    /[a-z][A-Z]/g
+  ).map(
+    // adjust index to be middle of camelCase
+    (index) => index + 1
+  )
+  const breakIndexes = uniq([...nonWordChars, ...camelCaseIndexes])
   breakIndexes.sort((a, b) => a - b)
   chunks.push(
     ...breakIndexes.map((strIndex, arrIndex) => {
@@ -39,8 +44,8 @@ export const chunkString = (str: string, size: number) => {
     chunks.push(out)
   }
   return chunks.flatMap((chunk) => {
-    if (chunk.length > size) {
-      return chunkStringAtLengths(chunk, size)
+    if (chunk.length > maxChunkLength) {
+      return chunkStringAtLengths(chunk, maxChunkLength)
     }
     return chunk
   })
