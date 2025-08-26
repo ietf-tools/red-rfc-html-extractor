@@ -5,7 +5,8 @@ import {
   getParentElementNodeNames,
   isCommentNode,
   isHtmlElement,
-  isTextNode
+  isTextNode,
+  rfcDocumentToPojo
 } from '../dom.ts'
 import type {
   DocumentPojo,
@@ -29,7 +30,7 @@ import {
   parseXml2RfcBody,
   parseXml2RfcHead
 } from './xml2rfc.ts'
-import { chunkString } from '../string.ts'
+import { chunkString, getAllIndexes } from '../string.ts'
 
 const SVG_STYLE_ATTRIBUTES = [
   'role',
@@ -279,38 +280,6 @@ const sniffRfcBucketHtmlType = (
   throw Error('Unable to sniff RFC HTML type. Please report this error.')
 }
 
-const rfcDocumentToPojo = (rfcDocument: Node[]): DocumentPojo => {
-  const walk = (node: Node): NodePojo | NodePojo[] | undefined => {
-    if (isHtmlElement(node)) {
-      return {
-        type: 'Element',
-        // the nodeName name is either:
-        // 1) the data-component attribute (eg, 'HorizontalScrollable')
-        // 2) the html element nodeName (eg 'a' or 'pre')
-        nodeName: node.dataset.component ?? node.nodeName.toLowerCase(),
-        attributes: elementAttributesToObject(node.attributes),
-        children: Array.from(node.childNodes).flatMap(walk).filter(isNodePojo)
-      }
-    } else if (isTextNode(node)) {
-      const { textContent } = node
-      if (textContent === null) {
-        return undefined
-      }
-      return {
-        type: 'Text',
-        textContent
-      }
-    } else if (isCommentNode(node)) {
-      return undefined
-    }
-    const errorTitle = `rfcDocumentToPojo: Unsupported nodeType ${node.nodeType}`
-    console.error(errorTitle, node)
-    throw Error(`${errorTitle}. See console for details.`)
-  }
-
-  return rfcDocument.flatMap(walk).filter(isNodePojo)
-}
-
 /**
  * This function converts link `href`s by changing (mutating) the given Nodes, by
  * changing attribute `href` values.
@@ -402,7 +371,7 @@ const convertHrefs = (rfcDocument: Node[], baseUrl: URL): void => {
  * work better than unicode approaches (zero-width spaces etc) because they aren't copied to the
  * clipboard.
  **/
-const ensureWordBreaks = (rfcDocument: Node[]): void => {
+export const ensureWordBreaks = (rfcDocument: Node[]): void => {
   const walk = (node: Node): void => {
     if (isHtmlElement(node)) {
       Array.from(node.childNodes).forEach(walk)
@@ -413,12 +382,30 @@ const ensureWordBreaks = (rfcDocument: Node[]): void => {
       }
 
       const parents = getParentElementNodeNames(parentElement)
-
       if (parents.includes('pre') || parents.includes('svg')) {
         return
       }
 
-      const words = textContent.split(/\b/)
+      const wordIndexes = getAllIndexes(textContent, /[\s]/)
+      wordIndexes.sort((a, b) => a - b)
+
+      const words = []
+      words.push(
+        ...wordIndexes.map((strIndex, arrIndex) => {
+          if (arrIndex === 0) {
+            return textContent.substring(0, strIndex)
+          }
+          return textContent.substring(wordIndexes[arrIndex - 1], strIndex)
+        })
+      )
+      if (wordIndexes.length > 0) {
+        const lastIndex = wordIndexes[wordIndexes.length - 1]
+        words.push(textContent.substring(lastIndex))
+      } else {
+        words.push(textContent)
+      }
+
+      
       const REQUIRE_WORDBREAK_AFTER_CHARS_LENGTH = 16
       const WORD_BREAK_ELEMENT = 'wbr'
 

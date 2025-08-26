@@ -1,6 +1,9 @@
 // @vitest-environment node
 import { test, expect } from 'vitest'
 import { chunkString } from './string'
+import { JSDOM } from 'jsdom'
+import { ensureWordBreaks } from './red-rfc-html-extractor-shared'
+import { getDOMParser, rfcDocumentToPojo } from './dom'
 
 test(`chunkString`, () => {
   const chunks = chunkString('abcdefghijklmnopqrstuvwxyz', 10)
@@ -9,7 +12,14 @@ test(`chunkString`, () => {
 
 test(`chunkString with url`, () => {
   const chunks = chunkString('https://www.example.com/path1/path2', 16)
-  expect(chunks).toEqual(['https://', 'www', '.example', '.com', '/path1', '/path2'])
+  expect(chunks).toEqual([
+    'https://',
+    'www',
+    '.example',
+    '.com',
+    '/path1',
+    '/path2'
+  ])
 
   const chunks2 = chunkString(
     'https://www.rfc-editor.org/search/rfc_search_detail.php?title=test&pubstatus%5B%5D=Any&pub_date_type=any',
@@ -85,4 +95,96 @@ test(`chunkString with camelCase`, () => {
 
   const chunks2 = chunkString('DecodePacketNumber(largest_pn', 10)
   expect(chunks2).toEqual(['Decode', 'Packet', 'Number', '(largest', '_pn'])
+})
+
+test('can break words', async () => {
+  const parser = await getDOMParser()
+  const dom = parser.parseFromString(
+    '<a href="https://www.rfc-editor.org/info/rfc9618">https://www.rfc-editor.org/info/rfc9618</a>',
+    'text/html'
+  )
+  const nodes = Array.from(dom.body.childNodes)
+  ensureWordBreaks(nodes)
+  const pojo = rfcDocumentToPojo(nodes)
+  expect(pojo).toEqual([
+    {
+      type: 'Element',
+      nodeName: 'a',
+      attributes: {
+        href: 'https://www.rfc-editor.org/info/rfc9618'
+      },
+      children: [
+        {
+          type: 'Text',
+          textContent: 'https://'
+        },
+        {
+          type: 'Element',
+          nodeName: 'wbr',
+          attributes: {},
+          children: []
+        },
+        {
+          type: 'Text',
+          textContent: 'www'
+        },
+        {
+          type: 'Element',
+          nodeName: 'wbr',
+          attributes: {},
+          children: []
+        },
+        {
+          type: 'Text',
+          textContent: '.rfc'
+        },
+        {
+          type: 'Element',
+          nodeName: 'wbr',
+          attributes: {},
+          children: []
+        },
+        {
+          type: 'Text',
+          textContent: '-editor'
+        },
+        {
+          type: 'Element',
+          nodeName: 'wbr',
+          attributes: {},
+          children: []
+        },
+        {
+          type: 'Text',
+          textContent: '.org'
+        },
+        {
+          type: 'Element',
+          nodeName: 'wbr',
+          attributes: {},
+          children: []
+        },
+        {
+          type: 'Text',
+          textContent: '/info'
+        },
+        {
+          type: 'Element',
+          nodeName: 'wbr',
+          attributes: {},
+          children: []
+        },
+        {
+          type: 'Text',
+          textContent: '/rfc9618'
+        },
+        {
+          type: 'Element',
+          nodeName: 'wbr',
+          attributes: {},
+          children: []
+        },
+      ]
+    }
+  ])
 })

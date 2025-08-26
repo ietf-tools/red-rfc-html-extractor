@@ -1,3 +1,5 @@
+import { DocumentPojo, isNodePojo, NodePojo } from './rfc-validators.ts'
+
 /**
  * W3C DOMParser factory that works on server and browser
  */
@@ -76,4 +78,36 @@ export const getParentElementNodeNames = (node: Node): string[] => {
     pointer = pointer.parentElement
   }
   return parents
+}
+
+export const rfcDocumentToPojo = (rfcDocument: Node[]): DocumentPojo => {
+  const walk = (node: Node): NodePojo | NodePojo[] | undefined => {
+    if (isHtmlElement(node)) {
+      return {
+        type: 'Element',
+        // the nodeName name is either:
+        // 1) the data-component attribute (eg, 'HorizontalScrollable')
+        // 2) the html element nodeName (eg 'a' or 'pre')
+        nodeName: node.dataset.component ?? node.nodeName.toLowerCase(),
+        attributes: elementAttributesToObject(node.attributes),
+        children: Array.from(node.childNodes).flatMap(walk).filter(isNodePojo)
+      }
+    } else if (isTextNode(node)) {
+      const { textContent } = node
+      if (textContent === null) {
+        return undefined
+      }
+      return {
+        type: 'Text',
+        textContent
+      }
+    } else if (isCommentNode(node)) {
+      return undefined
+    }
+    const errorTitle = `rfcDocumentToPojo: Unsupported nodeType ${node.nodeType}`
+    console.error(errorTitle, node)
+    throw Error(`${errorTitle}. See console for details.`)
+  }
+
+  return rfcDocument.flatMap(walk).filter(isNodePojo)
 }
