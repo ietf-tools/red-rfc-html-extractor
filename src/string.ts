@@ -65,10 +65,6 @@ export const chunkStringAtLengths = (str: string, size: number) => {
 }
 
 export const getAllIndexes = (str: string, pattern: RegExp): number[] => {
-  const indices = []
-  let match
-  while ((match = pattern.exec(str)) !== null) {
-    indices.push(match.index)
-  }
-  return indices
+  const matches = Array.from(str.matchAll(pattern))
+  return matches.map((match) => match.index)
 }

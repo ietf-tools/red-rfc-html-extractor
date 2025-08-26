@@ -183,8 +183,19 @@ test('can break words', async () => {
           nodeName: 'wbr',
           attributes: {},
           children: []
-        },
+        }
       ]
     }
   ])
+})
+
+test('can break words (2)', async () => {
+  const parser = await getDOMParser()
+  const html =
+    '<p id="section-boilerplate.1-3">Information about the current status of this document, any errata, and how to provide feedback on it may be obtained at <span><!--[--><!--[--><!--[--><a aria-current="page" href="/info/rfc9618" class="router-link-active router-link-exact-active" data-state="closed" data-grace-area-trigger=""><!--[--><!--[-->https://www.rfc-editor.org/info/rfc9618<!--]--><!--]--></a><!--teleport start--><!--teleport end--><!--]--><!--]--><!----><!--]--></span>.<a href="#section-boilerplate.1-3" class="pilcrow"><!--[--><!--[-->¶<!--]--><!--]--></a></p>'
+  const dom = parser.parseFromString(html, 'text/html')
+  const nodes = Array.from(dom.body.childNodes)
+  ensureWordBreaks(nodes)
+  const pojo = rfcDocumentToPojo(nodes)
+  expect(pojo).toMatchSnapshot()
 })

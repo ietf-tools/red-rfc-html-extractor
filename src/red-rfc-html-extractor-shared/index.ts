@@ -386,7 +386,7 @@ export const ensureWordBreaks = (rfcDocument: Node[]): void => {
         return
       }
 
-      const wordIndexes = getAllIndexes(textContent, /[\s]/)
+      const wordIndexes = getAllIndexes(textContent, /[\s]/g)
       wordIndexes.sort((a, b) => a - b)
 
       const words = []
@@ -405,7 +405,6 @@ export const ensureWordBreaks = (rfcDocument: Node[]): void => {
         words.push(textContent)
       }
 
-      
       const REQUIRE_WORDBREAK_AFTER_CHARS_LENGTH = 16
       const WORD_BREAK_ELEMENT = 'wbr'
 
