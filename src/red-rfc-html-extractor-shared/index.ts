@@ -1,19 +1,15 @@
 import sanitizeHtml from 'sanitize-html'
 import {
-  elementAttributesToObject,
   getDOMParser,
   getParentElementNodeNames,
-  isCommentNode,
   isHtmlElement,
   isTextNode,
   rfcDocumentToPojo
 } from '../dom.ts'
 import type {
-  DocumentPojo,
   MaxPreformattedLineLengthSchemaType,
-  NodePojo
 } from '../rfc-validators.ts'
-import { isNodePojo, RfcBucketHtmlDocumentSchema } from '../rfc-validators.ts'
+import { RfcBucketHtmlDocumentSchema } from '../rfc-validators.ts'
 import { blankRfcCommon, extractHrefRfcPart } from '../rfc.ts'
 import type { RfcCommon, RfcBucketHtmlDocument, RfcEditorToc } from '../rfc.ts'
 import { assertNever } from '../typescript.ts'
@@ -134,8 +130,8 @@ export const fetchSourceRfcHtml = async (
       text: ['x', 'y', ...SVG_STYLE_ATTRIBUTES],
       circle: ['cx', 'cy', 'r', ...SVG_STYLE_ATTRIBUTES],
       ellipse: ['cx', 'cy', 'rx', 'ry', ...SVG_STYLE_ATTRIBUTES],
-      textPath: ['href', 'startOffset'],
-      tspan: ['x', 'y', 'startOffset'],
+      textPath: ['href', 'startOffset', ...SVG_STYLE_ATTRIBUTES],
+      tspan: ['x', 'y', 'startOffset', ...SVG_STYLE_ATTRIBUTES],
       polygon: ['points', ...SVG_STYLE_ATTRIBUTES],
       polyline: ['points', ...SVG_STYLE_ATTRIBUTES],
       linearGradient: [
