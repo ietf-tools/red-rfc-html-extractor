@@ -15,7 +15,7 @@ const processRfcBucketHtml = async (rfcNumber: number) => {
 const RFC_PLAINTEXT_EXAMPLE = 2000
 const RFC_XML2RFC_EXAMPLE = 9000
 
-test.skip(`processRfcBucketHtml(${RFC_PLAINTEXT_EXAMPLE}) RFC without TOC`, async () => {
+test(`processRfcBucketHtml(${RFC_PLAINTEXT_EXAMPLE}) RFC without TOC`, async () => {
   const rfcBucketHtmlDocument = await processRfcBucketHtml(
     RFC_PLAINTEXT_EXAMPLE
   )
@@ -25,7 +25,7 @@ test.skip(`processRfcBucketHtml(${RFC_PLAINTEXT_EXAMPLE}) RFC without TOC`, asyn
   expect(rfcBucketHtmlDocument?.tableOfContents).toBeTruthy()
 })
 
-test.skip(`processRfcBucketHtml(${RFC_XML2RFC_EXAMPLE}) RFC with TOC`, async () => {
+test(`processRfcBucketHtml(${RFC_XML2RFC_EXAMPLE}) RFC with TOC`, async () => {
   const rfcBucketHtmlDocument = await processRfcBucketHtml(RFC_XML2RFC_EXAMPLE)
   expect(rfcBucketHtmlDocument).toMatchSnapshot()
   expect(rfcBucketHtmlDocument?.tableOfContents).toBeTruthy()

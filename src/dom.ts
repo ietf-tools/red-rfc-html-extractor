@@ -1,4 +1,5 @@
-import { DocumentPojo, isNodePojo, NodePojo } from './rfc-validators.ts'
+import { isNodePojo } from './rfc-validators.ts'
+import type { DocumentPojo, NodePojo } from './rfc-validators.ts'
 
 /**
  * W3C DOMParser factory that works on server and browser
