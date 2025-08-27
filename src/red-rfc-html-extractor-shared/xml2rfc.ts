@@ -402,13 +402,9 @@ const wrapSvg = (svg: HTMLElement): HTMLElement => {
     }
 
     return {
-      widthCSSLength: ensureUnit(
-        widthAttr !== null ? widthAttr : widthPx.toString()
-      ),
+      widthCSSLength: ensureUnit(widthAttr ?? widthPx.toString()),
       widthPx,
-      heightCSSLength: ensureUnit(
-        heightAttr !== null ? heightAttr : heightPx.toString()
-      ),
+      heightCSSLength: ensureUnit(heightAttr ?? heightPx.toString()),
       heightPx
     }
   }
