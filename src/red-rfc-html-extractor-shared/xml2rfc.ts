@@ -361,14 +361,19 @@ const wrapSvg = (svg: HTMLElement): HTMLElement => {
       return `${parts[0]}${parts[1]}`
     }
 
-    const DEFAULT_WIDTH_PX = 320
-    const DEFAULT_HEIGHT_PX = 320
+    const DEFAULT_WIDTH_PX = 724  // taken from width of this SVG at 1920x1080 window size https://www.rfc-editor.org/rfc/rfc9692.html#name-rift-information-distributi
+    const DEFAULT_HEIGHT_PX = 724
+
     const widthAttr = el.getAttribute('width')
     let widthPx = parseLength(widthAttr)
     const heightAttr = el.getAttribute('height')
     let heightPx = parseLength(heightAttr)
+
     if (Number.isNaN(widthPx) || Number.isNaN(heightPx)) {
-      // fallback to using viewBox
+      widthPx = DEFAULT_WIDTH_PX
+      heightPx = DEFAULT_HEIGHT_PX
+
+      // fallback to using viewBox to determine a height that fits that aspect ratio
       const viewBoxAttr = el.getAttribute('viewBox')
       if (viewBoxAttr) {
         const [x1Attr, y1Attr, x2Attr, y2Attr] = viewBoxAttr.split(/\s+/)
@@ -384,29 +389,17 @@ const wrapSvg = (svg: HTMLElement): HTMLElement => {
         ) {
           // fallback to default value
           console.error(
-            'Could not find width/height of SVG. This could break mobile layout',
+            'Could not find width/height/viewBox of SVG. This could break mobile layout',
             { widthAttr, heightAttr, viewBoxAttr }
           )
-          return {
-            widthCSSLength: ensureUnit(DEFAULT_WIDTH_PX.toString()),
-            widthPx: DEFAULT_WIDTH_PX,
-            heightCSSLength: ensureUnit(DEFAULT_HEIGHT_PX.toString()),
-            heightPx: DEFAULT_HEIGHT_PX
-          }
-        }
-        widthPx = x2 - x1
-        heightPx = y2 - y1
-        return {
-          widthCSSLength: ensureUnit(widthPx.toString()),
-          widthPx,
-          heightCSSLength: ensureUnit(heightPx.toString()),
-          heightPx
+        } else {
+          const viewBoxWidth = x2 - x1
+          const viewBoxHeight = y2 - y1
+          const viewBoxRatio = viewBoxHeight / viewBoxWidth
+          heightPx = widthPx * viewBoxRatio
         }
       }
     }
-
-    widthPx = Number.isNaN(widthPx) ? DEFAULT_WIDTH_PX : widthPx
-    heightPx = Number.isNaN(heightPx) ? DEFAULT_HEIGHT_PX : heightPx
 
     return {
       widthCSSLength: ensureUnit(
