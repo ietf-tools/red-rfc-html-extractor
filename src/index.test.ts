@@ -3,7 +3,7 @@ import { test, expect } from 'vitest'
 import {
   fetchSourceRfcHtml,
   rfcBucketHtmlToRfcDocument
-} from './red-rfc-html-extractor-shared/index.ts'
+} from './index.ts'
 
 const processRfcBucketHtml = async (rfcNumber: number) => {
   const html = await fetchSourceRfcHtml(rfcNumber)

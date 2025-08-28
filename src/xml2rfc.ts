@@ -1,8 +1,8 @@
-import { convertCSSUnit, parseCSSLength } from '../css-unit-converter/index.ts'
-import { getDOMParser, getInnerText, isHtmlElement } from '../dom.ts'
-import type { MaxPreformattedLineLengthSchemaType } from '../rfc-validators.ts'
-import { blankRfcCommon } from '../rfc.ts'
-import type { RfcEditorToc } from '../rfc.ts'
+import { convertCSSUnit, parseCSSLength } from './css-unit-converter/index.ts'
+import { getDOMParser, getInnerText, isHtmlElement } from './utilities/dom.ts'
+import type { MaxPreformattedLineLengthSchemaType } from './utilities/rfc-validators.ts'
+import { blankRfcCommon } from './rfc.ts'
+import type { RfcEditorToc } from './rfc.ts'
 import type { RfcAndToc } from './index.ts'
 
 type TocSections = RfcEditorToc['sections']

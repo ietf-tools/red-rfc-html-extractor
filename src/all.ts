@@ -1,8 +1,8 @@
 import {
   fetchSourceRfcHtml,
   rfcBucketHtmlToRfcDocument
-} from './red-rfc-html-extractor-shared/index.ts'
-import { saveToS3 } from './s3.ts'
+} from './index.ts'
+import { saveToS3 } from './utilities/s3.ts'
 import { setTimeout } from 'node:timers/promises'
 
 const main = async (

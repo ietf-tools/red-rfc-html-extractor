@@ -1,7 +1,7 @@
-import { getInnerText, isHtmlElement, getDOMParser } from '../dom.ts'
-import type { MaxPreformattedLineLengthSchemaType } from '../rfc-validators.ts'
-import { blankRfcCommon } from '../rfc.ts'
-import type { RfcEditorToc } from '../rfc.ts'
+import { getInnerText, isHtmlElement, getDOMParser } from './utilities/dom.ts'
+import type { MaxPreformattedLineLengthSchemaType } from './utilities/rfc-validators.ts'
+import { blankRfcCommon } from './rfc.ts'
+import type { RfcEditorToc } from './rfc.ts'
 import type { RfcAndToc } from './index.ts'
 
 type TocSections = RfcEditorToc['sections']

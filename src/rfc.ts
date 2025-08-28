@@ -3,7 +3,7 @@ import {
   RfcBucketHtmlDocumentSchema,
   RfcCommonSchema,
   TableOfContentsSchema
-} from './rfc-validators.ts'
+} from './utilities/rfc-validators.ts'
 
 export type RfcCommon = z.infer<typeof RfcCommonSchema>
 

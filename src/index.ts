@@ -5,15 +5,15 @@ import {
   isHtmlElement,
   isTextNode,
   rfcDocumentToPojo
-} from '../dom.ts'
+} from './utilities/dom.ts'
 import type {
   MaxPreformattedLineLengthSchemaType,
-} from '../rfc-validators.ts'
-import { RfcBucketHtmlDocumentSchema } from '../rfc-validators.ts'
-import { blankRfcCommon, extractHrefRfcPart } from '../rfc.ts'
-import type { RfcCommon, RfcBucketHtmlDocument, RfcEditorToc } from '../rfc.ts'
-import { assertNever } from '../typescript.ts'
-import { PUBLIC_SITE } from '../url.ts'
+} from './utilities/rfc-validators.ts'
+import { RfcBucketHtmlDocumentSchema } from './utilities/rfc-validators.ts'
+import { blankRfcCommon, extractHrefRfcPart } from './rfc.ts'
+import type { RfcCommon, RfcBucketHtmlDocument, RfcEditorToc } from './rfc.ts'
+import { assertNever } from './utilities/typescript.ts'
+import { PUBLIC_SITE } from './utilities/url.ts'
 import {
   getPlaintextMaxLineLength,
   getPlaintextRfcDocument,
@@ -26,7 +26,7 @@ import {
   parseXml2RfcBody,
   parseXml2RfcHead
 } from './xml2rfc.ts'
-import { chunkString, getAllIndexes } from '../string.ts'
+import { chunkString, getAllIndexes } from './utilities/string.ts'
 
 const SVG_STYLE_ATTRIBUTES = [
   'role',
@@ -104,7 +104,7 @@ export const fetchSourceRfcHtml = async (
       time: ['datetime'],
       td: ['colspan', 'rowspan'],
       th: ['colspan', 'rowspan'],
-      ol: ['start', 'type'],
+      ol: ['start', 'type', 'reversed'],
       link: ['rel', 'href'],
       svg: [
         'xmlns',
