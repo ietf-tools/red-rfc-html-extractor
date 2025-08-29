@@ -58,13 +58,18 @@ export const rfcBucketPdfToRfcDocument = async (
     const altText = await getPageText(page)
 
     // Create canvas for rendering
-    const viewport = page.getViewport({ scale: 2 })
+    const scale = 1
+    const viewport = page.getViewport({ scale })
     const viewportRatio = viewport.height / viewport.width
     const newHeightPx = DEFAULT_WIDTH_PX * viewportRatio
 
     const canvas = dom.createElement('canvas')
+    dom.body.append(canvas)
     canvas.width = DEFAULT_WIDTH_PX
     canvas.height = newHeightPx
+    canvas.style.width = Math.floor(DEFAULT_WIDTH_PX) + 'px'
+    canvas.style.height = Math.floor(newHeightPx) + 'px'
+    
     const context = canvas.getContext('2d')
 
     if (context === null) {
@@ -87,6 +92,8 @@ export const rfcBucketPdfToRfcDocument = async (
         }
       ]
     })
+
+    dom.body.removeChild(canvas)
 
     const pageNode = dom.createElement('div')
     const pageHeading = dom.createElement('h2')
