@@ -1,5 +1,6 @@
 import { createCanvas } from 'canvas'
-import * as pdfjsLib from 'pdfjs-dist'
+import _pdfjsLib from 'pdfjs-dist/legacy/build/pdf.js'
+import * as PdfJsDefaultf from 'pdfjs-dist'
 import { blankRfcCommon } from './rfc.ts'
 import { PUBLIC_SITE } from './utilities/url.ts'
 import { BLANK_HTML, getDOMParser, rfcDocumentToPojo } from './utilities/dom.ts'
@@ -30,6 +31,8 @@ type PdfPage = {
   buffer: Buffer<ArrayBufferLike>
   altText: string
 }
+
+const pdfjsLib = _pdfjsLib as typeof PdfJsDefaultf
 
 export const rfcBucketPdfToRfcDocument = async (
   pdf: ArrayBuffer,
