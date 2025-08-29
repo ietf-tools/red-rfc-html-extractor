@@ -1,5 +1,5 @@
 import { createCanvas } from 'canvas'
-import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
+import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
 import { blankRfcCommon } from './rfc.ts'
 import { PUBLIC_SITE } from './utilities/url.ts'
 import { BLANK_HTML, getDOMParser, rfcDocumentToPojo } from './utilities/dom.ts'
@@ -32,11 +32,12 @@ type PdfPage = {
 }
 
 export const rfcBucketPdfToRfcDocument = async (
-  pdf: ArrayBuffer,
+  pdfBuffer: ArrayBuffer,
   rfcNumber: number
 ): Promise<[RfcBucketHtmlDocument, PdfPage[]]> => {
+  const pdfBytes = new Uint8Array(pdfBuffer)
   const pdfDocument = await getDocument({
-    data: pdf
+    data: pdfBytes
   }).promise
 
   const pdfPages: PdfPage[] = []
