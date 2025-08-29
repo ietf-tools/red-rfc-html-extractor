@@ -71,10 +71,7 @@ export const rfcBucketPdfToRfcDocument = async (
       throw Error(`Unable to getContext()`)
     }
 
-    await page.render({
-      canvasContext: context,
-      viewport: viewport
-    }).promise
+    await page.render({ canvas, viewport }).promise
 
     // Convert canvas to buffer
     const buffer = canvas.toBuffer('image/png')
