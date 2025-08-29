@@ -27,7 +27,7 @@ export const fetchRfcPDF = async (
 
 type PdfPage = {
   filename: string
-  buffer: ArrayBuffer
+  imageData: Uint8Array
   altText: string
 }
 
@@ -54,7 +54,6 @@ export const rfcBucketPdfToRfcDocument = async (
       canvasImport: () => import('@napi-rs/canvas'),
       scale: 1
     })
-    const page = await pdfDocument.getPage(pageNum)
     const pageTitle = `Page ${pageNum}`
 
     const domId = `page${pageNum}`
@@ -64,14 +63,15 @@ export const rfcBucketPdfToRfcDocument = async (
     const altText = text[pageNum]
 
     console.log({ altText })
-
             
     // Convert canvas to buffer
     
 
     const filename = `${rfcNumber}-page${pageNum}.png`
 
-    pdfPages.push({ filename, buffer: pagePng, altText })
+    const imageData = new Uint8Array(pagePng)
+
+    pdfPages.push({ filename, imageData, altText })
 
     tableOfContents.sections.push({
       links: [

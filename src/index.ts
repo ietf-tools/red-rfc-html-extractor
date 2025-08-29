@@ -9,13 +9,14 @@ export const processRfc = async (rfcNumber: number): Promise<boolean> => {
     await saveToS3(rfcJSONPathBuilder(rfcNumber), JSON.stringify(rfcDoc))
     return true
   }
+  console.log(' - trying PDF instead')
   // Some RFCs don't have HTML eg RFC418
   const pdf = await fetchRfcPDF(rfcNumber)
   if (pdf !== null) {
     const [rfcDoc, images] = await rfcBucketPdfToRfcDocument(pdf, rfcNumber)
     await Promise.all([
       saveToS3(rfcJSONPathBuilder(rfcNumber), JSON.stringify(rfcDoc)),
-      ...images.map((image) => saveToS3(rfcImagePathBuilder(image.filename), image.buffer))
+      ...images.map((image) => saveToS3(rfcImagePathBuilder(image.filename), image.imageData))
     ])
     return true
   }
