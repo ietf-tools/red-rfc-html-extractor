@@ -1,11 +1,12 @@
 import { createCanvas } from 'canvas'
 import pdfjsLib from 'pdfjs-dist'
-import { blankRfcCommon, RfcBucketHtmlDocument } from './rfc.ts'
+import { blankRfcCommon } from './rfc.ts'
 import { PUBLIC_SITE } from './utilities/url.ts'
 import { BLANK_HTML, getDOMParser, rfcDocumentToPojo } from './utilities/dom.ts'
 import { DEFAULT_WIDTH_PX } from './utilities/layout.ts'
 import { rfcImagePathBuilder } from './utilities/s3.ts'
-import { TableOfContents } from './utilities/rfc-validators.ts'
+import type { TableOfContents } from './utilities/rfc-validators.ts'
+import type { RfcBucketHtmlDocument } from './rfc.ts'
 
 export const fetchRfcPDF = async (
   rfcNumber: number
@@ -76,10 +77,12 @@ export const rfcBucketPdfToRfcDocument = async (
     pdfPages.push({ filename, buffer, altText })
 
     tableOfContents.sections.push({
-      links: [{
-        title: pageTitle,
-        id: domId,
-      }]
+      links: [
+        {
+          title: pageTitle,
+          id: domId
+        }
+      ]
     })
 
     const pageNode = dom.createElement('div')
@@ -92,7 +95,7 @@ export const rfcBucketPdfToRfcDocument = async (
     pageImg.setAttribute('width', DEFAULT_WIDTH_PX.toString())
     pageImg.setAttribute('height', newHeightPx.toString())
     pageImg.setAttribute('alt', altText)
-    if(pageNum > 1) {
+    if (pageNum > 1) {
       // for pages 2+ we'll lazy load images
       // https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/img#loading
       pageImg.setAttribute('loading', 'lazy')
