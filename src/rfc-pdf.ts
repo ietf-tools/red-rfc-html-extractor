@@ -69,14 +69,14 @@ export const rfcBucketPdfToRfcDocument = async (
     canvas.height = newHeightPx
     canvas.style.width = Math.floor(DEFAULT_WIDTH_PX) + 'px'
     canvas.style.height = Math.floor(newHeightPx) + 'px'
-    
-    const context = canvas.getContext('2d')
 
-    if (context === null) {
-      throw Error(`Unable to getContext()`)
+    const canvasContext = canvas.getContext('2d')
+
+    if (canvasContext === null) {
+      throw Error(`Unable to canvas.getContext('2d')`)
     }
 
-    await page.render({ canvas, viewport }).promise
+    await page.render({ canvasContext, canvas: null, viewport }).promise
 
     // Convert canvas to buffer
     const buffer = canvas.toBuffer('image/png')
