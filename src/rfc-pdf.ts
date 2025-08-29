@@ -52,7 +52,8 @@ export const rfcBucketPdfToRfcDocument = async (
     const domId = `page${pageNum}`
 
     // Extract alt text
-    const altText = await getPageText(page)
+    const altText = await page.getTextContent()
+    console.log({ altText })
 
     // Create canvas for rendering
     const scale = 1
