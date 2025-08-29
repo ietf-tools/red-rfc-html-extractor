@@ -7,7 +7,7 @@
   "scripts": {
     "generate": "node --experimental-strip-types ./src/index.ts 1137",
     "format": "npx prettier --config ./prettier.config.cjs src --write",
-    "test": "vitest --testTimeout 10000 src/index.test.ts src/string.test.ts src/css-unit-converter/index.test.ts"
+    "test": "vitest --testTimeout 10000"
   },
   "repository": {
     "type": "git",
