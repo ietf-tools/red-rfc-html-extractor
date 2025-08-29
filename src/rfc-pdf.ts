@@ -1,4 +1,3 @@
-import { createCanvas } from 'canvas'
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
 import { blankRfcCommon } from './rfc.ts'
 import { PUBLIC_SITE } from './utilities/url.ts'
@@ -7,6 +6,7 @@ import { DEFAULT_WIDTH_PX } from './utilities/layout.ts'
 import { rfcImagePathBuilder } from './utilities/s3.ts'
 import type { TableOfContents } from './utilities/rfc-validators.ts'
 import type { RfcBucketHtmlDocument } from './rfc.ts'
+import { PDFPageProxy } from 'pdfjs-dist/types/web/interfaces.js'
 
 export const fetchRfcPDF = async (
   rfcNumber: number
@@ -61,14 +61,19 @@ export const rfcBucketPdfToRfcDocument = async (
     const viewport = page.getViewport({ scale: 2 })
     const viewportRatio = viewport.height / viewport.width
     const newHeightPx = DEFAULT_WIDTH_PX * viewportRatio
-    const canvas = createCanvas(DEFAULT_WIDTH_PX, newHeightPx)
+
+    const canvas = dom.createElement('canvas')
+    canvas.width = DEFAULT_WIDTH_PX
+    canvas.height = newHeightPx
     const context = canvas.getContext('2d')
 
+    if (context === null) {
+      throw Error(`Unable to getContext()`)
+    }
+
     await page.render({
-      // @ts-ignore
       canvasContext: context,
-      viewport: viewport,
-      continueCallback: null
+      viewport: viewport
     }).promise
 
     // Convert canvas to buffer
@@ -120,12 +125,12 @@ export const rfcBucketPdfToRfcDocument = async (
   return [doc, pdfPages]
 }
 
-const getPageText = async (page: pdfjsLib.PDFPageProxy): Promise<string> => {
+const getPageText = async (page: PDFPageProxy): Promise<string> => {
   const textContent = await page.getTextContent()
   return textContent.items
     .map((item) => {
-      console.log(' - text in PDF', Object.keys(item), String(item), item)
-      return String(item)
+      // console.log(' - text in PDF', Object.keys(item), String(item), item)
+      return String('str' in item ? item.str : '')
     })
     .join('')
 }
