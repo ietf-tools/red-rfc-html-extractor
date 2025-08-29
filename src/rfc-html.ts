@@ -17,40 +17,14 @@ import {
   getPlaintextRfcDocument,
   parsePlaintextBody,
   parsePlaintextHead
-} from './plaintext.ts'
+} from './rfc-html-plaintext.ts'
 import {
   getXml2RfcMaxLineLength,
   getXml2RfcRfcDocument,
   parseXml2RfcBody,
   parseXml2RfcHead
-} from './xml2rfc.ts'
+} from './rfc-html-xml2rfc.ts'
 import { chunkString, getAllIndexes } from './utilities/string.ts'
-
-const SVG_STYLE_ATTRIBUTES = [
-  'role',
-
-  'fill',
-  'fill-rule',
-
-  'clip-rule',
-
-  'stroke',
-  'stroke-width',
-  'stroke-linecap',
-  'stroke-linejoin',
-  'stroke-miterlimit',
-
-  'transform',
-  'transform-origin',
-
-  'rotate',
-
-  // Text attributes
-  'text-anchor',
-  'font-family',
-  'font-size',
-  'text-anchor'
-]
 
 export const fetchSourceRfcHtml = async (
   rfcNumber: number
@@ -63,6 +37,34 @@ export const fetchSourceRfcHtml = async (
     )
     return null
   }
+
+  // Sanitise HTML before returning it
+
+  const SVG_STYLE_ATTRIBUTES = [
+    'role',
+
+    'fill',
+    'fill-rule',
+
+    'clip-rule',
+
+    'stroke',
+    'stroke-width',
+    'stroke-linecap',
+    'stroke-linejoin',
+    'stroke-miterlimit',
+
+    'transform',
+    'transform-origin',
+
+    'rotate',
+
+    // Text attributes
+    'text-anchor',
+    'font-family',
+    'font-size',
+    'text-anchor'
+  ]
 
   const dirtyHtml = await response.text()
   const sanitisedHtml = sanitizeHtml(dirtyHtml, {
@@ -213,6 +215,8 @@ export const rfcBucketHtmlToRfcDocument = async (
       rfcDocument = getXml2RfcRfcDocument(dom)
       maxPreformattedLineLength = await getXml2RfcMaxLineLength(dom)
       break
+    case 'pdf-or-ps':
+      throw Error(`RFC HTML should never be detected as ${documentHtmlType}`)
     default:
       assertNever(documentHtmlType)
       break

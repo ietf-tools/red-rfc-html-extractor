@@ -3,7 +3,12 @@ import { processRfc } from './index.ts'
 const main = async (rfcNumber: number): Promise<void> => {
   console.log(`Processing RFC ${rfcNumber}...`)
   try {
-    await processRfc(rfcNumber)
+    const isDone = await processRfc(rfcNumber)
+    if (isDone) {
+      console.log(`Pushed RFC ${rfcNumber} to bucket successfully.`)
+    } else {
+      console.error(`Unable to process RFC ${rfcNumber}`)
+    }
   } catch (err) {
     console.warn(
       `Failed to process RFC ${rfcNumber}: ${(err as Error).message}`

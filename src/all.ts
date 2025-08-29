@@ -8,7 +8,12 @@ const main = async (
   for (let rfcNumber = minRfcNumber; rfcNumber <= maxRfcNumber; rfcNumber++) {
     console.log(`Processing RFC ${rfcNumber}...`)
     try {
-      await processRfc(rfcNumber)
+      const isDone = await processRfc(rfcNumber)
+      if(isDone) {
+        console.log(`Pushed RFC ${rfcNumber} to bucket successfully.`)
+      } else {
+        console.error(`Unable to process RFC ${rfcNumber}`)
+      }
       await setTimeout(80)
     } catch (err) {
       console.warn(`Failed to process ${rfcNumber}: ${(err as Error).message}`)

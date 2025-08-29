@@ -3,7 +3,8 @@ import { getDOMParser, getInnerText, isHtmlElement } from './utilities/dom.ts'
 import type { MaxPreformattedLineLengthSchemaType } from './utilities/rfc-validators.ts'
 import { blankRfcCommon } from './rfc.ts'
 import type { RfcEditorToc } from './rfc.ts'
-import type { RfcAndToc } from './index.ts'
+import type { RfcAndToc } from './rfc-html.ts'
+import { DEFAULT_WIDTH_PX } from './utilities/layout.ts'
 
 type TocSections = RfcEditorToc['sections']
 type TocSection = TocSections[number]
@@ -361,8 +362,7 @@ const wrapSvg = (svg: HTMLElement): HTMLElement => {
       return `${parts[0]}${parts[1]}`
     }
 
-    const DEFAULT_WIDTH_PX = 724  // taken from width of this SVG at 1920x1080 window size https://www.rfc-editor.org/rfc/rfc9692.html#name-rift-information-distributi
-    const DEFAULT_HEIGHT_PX = 724
+    const DEFAULT_HEIGHT_PX = DEFAULT_WIDTH_PX
 
     const widthAttr = el.getAttribute('width')
     let widthPx = parseLength(widthAttr)
@@ -417,7 +417,7 @@ const wrapSvg = (svg: HTMLElement): HTMLElement => {
   //
   //  - small mobile viewport is about 250px
   //  - indentation from the left due to list items tables etc might be 100px
-  //  
+  //
   // So an SVG would only need to be 150px wide to exceed the viewport width and
   // stretch/break layout. 100px is chosen to allow even more buffer from breaking
   // layout.
@@ -507,7 +507,7 @@ export const getXml2RfcMaxLineLength = async (
    *
    * This means that the max line length can vary between touch and touchless
    * interfaces.
-   * 
+   *
    * FIXME: this feature isn't used anymore. delete it.
    */
   const ANCHOR_SUFFIX_CHAR_WIDTH = 3

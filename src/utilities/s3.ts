@@ -1,4 +1,5 @@
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
+import type {  } from '@aws-sdk/client-s3'
 
 const s3Cli = new S3Client({
   endpoint: process.env.S3_OUT_ENDPOINT ?? '',
@@ -11,15 +12,21 @@ const s3Cli = new S3Client({
   responseChecksumValidation: 'WHEN_REQUIRED'
 })
 
+type StreamingBlobPayloadInputTypes = ConstructorParameters<typeof PutObjectCommand>[0]["Body"]
+
 export async function saveToS3(
-  rfcNumber: number,
-  contents: string
+  key: string,
+  contents: StreamingBlobPayloadInputTypes
 ): Promise<void> {
   await s3Cli.send(
     new PutObjectCommand({
       Bucket: process.env.S3_OUT_BUCKET,
-      Key: `rfc/${rfcNumber}.json`,
+      Key: key,
       Body: contents
     })
   )
 }
+
+export const rfcJSONPathBuilder = (rfcNumber: number) => `rfc/${rfcNumber}.json` as const
+
+export const rfcImagePathBuilder = (filename: string) => `rfc/${filename}` as const

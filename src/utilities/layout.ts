@@ -1,0 +1,1 @@
+export const DEFAULT_WIDTH_PX = 724  // taken from width of this SVG at 1920x1080 window size https://www.rfc-editor.org/rfc/rfc9692.html#name-rift-information-distributi

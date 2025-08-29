@@ -2,7 +2,7 @@ import { getInnerText, isHtmlElement, getDOMParser } from './utilities/dom.ts'
 import type { MaxPreformattedLineLengthSchemaType } from './utilities/rfc-validators.ts'
 import { blankRfcCommon } from './rfc.ts'
 import type { RfcEditorToc } from './rfc.ts'
-import type { RfcAndToc } from './index.ts'
+import type { RfcAndToc } from './rfc-html.ts'
 
 type TocSections = RfcEditorToc['sections']
 type TocSection = TocSections[number]
