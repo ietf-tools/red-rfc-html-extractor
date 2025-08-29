@@ -27,9 +27,11 @@ export const fetchRfcPDF = async (
 
 type PdfPage = {
   filename: string
-  imageData: Uint8Array
+  imageData: ReadableStream
   altText: string
 }
+
+const CHUNK_SIZE = 8192
 
 export const rfcBucketPdfToRfcDocument = async (
   pdfBuffer: ArrayBuffer,
@@ -63,13 +65,13 @@ export const rfcBucketPdfToRfcDocument = async (
     const altText = text[pageNum]
 
     console.log({ altText })
-            
+
     // Convert canvas to buffer
-    
 
     const filename = `${rfcNumber}-page${pageNum}.png`
 
-    const imageData = new Uint8Array(pagePng)
+    const blob = new Blob([pagePng])
+    const imageData = blob.stream()
 
     pdfPages.push({ filename, imageData, altText })
 
