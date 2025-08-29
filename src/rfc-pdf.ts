@@ -1,5 +1,5 @@
 import { createCanvas } from 'canvas'
-import pdfjsLib from 'pdfjs-dist'
+import * as pdfjsLib from 'pdfjs-dist'
 import { blankRfcCommon } from './rfc.ts'
 import { PUBLIC_SITE } from './utilities/url.ts'
 import { BLANK_HTML, getDOMParser, rfcDocumentToPojo } from './utilities/dom.ts'
