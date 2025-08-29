@@ -27,7 +27,7 @@ export const fetchRfcPDF = async (
 
 type PdfPage = {
   filename: string
-  imageData: ReadableStream
+  imageData: Buffer
   altText: string
 }
 
@@ -70,8 +70,9 @@ export const rfcBucketPdfToRfcDocument = async (
 
     const filename = `${rfcNumber}-page${pageNum}.png`
 
-    const blob = new Blob([pagePng])
-    const imageData = blob.stream()
+    console.log(' - pagePng.byteLength', pagePng.byteLength)
+
+    const imageData = Buffer.from(pagePng)
 
     pdfPages.push({ filename, imageData, altText })
 
