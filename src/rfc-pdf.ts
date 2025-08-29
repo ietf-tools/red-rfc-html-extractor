@@ -1,4 +1,4 @@
-import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
+import { extractText, getDocumentProxy } from 'unpdf'
 import { blankRfcCommon } from './rfc.ts'
 import { PUBLIC_SITE } from './utilities/url.ts'
 import { BLANK_HTML, getDOMParser, rfcDocumentToPojo } from './utilities/dom.ts'
@@ -6,7 +6,6 @@ import { DEFAULT_WIDTH_PX } from './utilities/layout.ts'
 import { rfcImagePathBuilder } from './utilities/s3.ts'
 import type { TableOfContents } from './utilities/rfc-validators.ts'
 import type { RfcBucketHtmlDocument } from './rfc.ts'
-import type { PDFPageProxy } from 'pdfjs-dist/types/web/interfaces.js'
 
 export const fetchRfcPDF = async (
   rfcNumber: number
@@ -36,9 +35,7 @@ export const rfcBucketPdfToRfcDocument = async (
   rfcNumber: number
 ): Promise<[RfcBucketHtmlDocument, PdfPage[]]> => {
   const pdfBytes = new Uint8Array(pdfBuffer)
-  const pdfDocument = await getDocument({
-    data: pdfBytes
-  }).promise
+  const pdfDocument = await getDocumentProxy(pdfBytes)
 
   const pdfPages: PdfPage[] = []
 
@@ -79,7 +76,15 @@ export const rfcBucketPdfToRfcDocument = async (
     await page.render({ canvasContext, canvas: null, viewport }).promise
 
     // Convert canvas to buffer
-    const buffer = canvas.toBuffer('image/png')
+    const maybeBlob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, 'image/png')
+    )
+    if (maybeBlob === null) {
+      throw Error(`Unable to extract blob`)
+    }
+    const arrayBuffer = await maybeBlob.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+
     const filename = `${rfcNumber}-page${pageNum}.png`
 
     pdfPages.push({ filename, buffer, altText })
@@ -127,14 +132,4 @@ export const rfcBucketPdfToRfcDocument = async (
   }
 
   return [doc, pdfPages]
-}
-
-const getPageText = async (page: PDFPageProxy): Promise<string> => {
-  const textContent = await page.getTextContent()
-  return textContent.items
-    .map((item) => {
-      // console.log(' - text in PDF', Object.keys(item), String(item), item)
-      return String('str' in item ? item.str : '')
-    })
-    .join('')
 }
