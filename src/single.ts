@@ -1,20 +1,9 @@
-import {
-  fetchSourceRfcHtml,
-  rfcBucketHtmlToRfcDocument
-} from './index.ts'
-import { saveToS3 } from './utilities/s3.ts'
+import { processRfc } from './index.ts'
 
 const main = async (rfcNumber: number): Promise<void> => {
   console.log(`Processing RFC ${rfcNumber}...`)
   try {
-    const html = await fetchSourceRfcHtml(rfcNumber)
-    if (html) {
-      const rfcDoc = await rfcBucketHtmlToRfcDocument(html, rfcNumber)
-      await saveToS3(rfcNumber, JSON.stringify(rfcDoc))
-      console.log(`Pushed RFC ${rfcNumber} to bucket successfully.`)
-    } else {
-      throw new Error(`Failed to fetch RFC ${rfcNumber} html.`)
-    }
+    await processRfc(rfcNumber)
   } catch (err) {
     console.warn(
       `Failed to process RFC ${rfcNumber}: ${(err as Error).message}`
@@ -24,7 +13,9 @@ const main = async (rfcNumber: number): Promise<void> => {
 
 if (!process.argv[2]) {
   throw Error(
-    `Script requires RFC Number arg but argv was ${JSON.stringify(process.argv)}`
+    `Script requires RFC Number arg but argv was ${JSON.stringify(
+      process.argv
+    )}`
   )
 }
 

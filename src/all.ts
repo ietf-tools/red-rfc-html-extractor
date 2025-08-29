@@ -1,8 +1,4 @@
-import {
-  fetchSourceRfcHtml,
-  rfcBucketHtmlToRfcDocument
-} from './index.ts'
-import { saveToS3 } from './utilities/s3.ts'
+import { processRfc } from './index.ts'
 import { setTimeout } from 'node:timers/promises'
 
 const main = async (
@@ -12,15 +8,7 @@ const main = async (
   for (let rfcNumber = minRfcNumber; rfcNumber <= maxRfcNumber; rfcNumber++) {
     console.log(`Processing RFC ${rfcNumber}...`)
     try {
-      const html = await fetchSourceRfcHtml(rfcNumber)
-      if (html) {
-        const rfcDoc = await rfcBucketHtmlToRfcDocument(html, rfcNumber)
-        await saveToS3(rfcNumber, JSON.stringify(rfcDoc))
-        console.log(`Pushed RFC ${rfcNumber} to bucket successfully.`)
-      } else {
-        console.log(`Failed to fetch RFC ${rfcNumber}, skipping...`)
-        continue
-      }
+      await processRfc(rfcNumber)
       await setTimeout(80)
     } catch (err) {
       console.warn(`Failed to process ${rfcNumber}: ${(err as Error).message}`)
@@ -30,7 +18,9 @@ const main = async (
 
 if (!process.argv[2] || !process.argv[3]) {
   throw Error(
-    `Script requires min and max RFC Number args but argv was ${JSON.stringify(process.argv)}`
+    `Script requires min and max RFC Number args but argv was ${JSON.stringify(
+      process.argv
+    )}`
   )
 }
 
