@@ -92,6 +92,11 @@ export const rfcBucketPdfToRfcDocument = async (
     pageImg.setAttribute('width', DEFAULT_WIDTH_PX.toString())
     pageImg.setAttribute('height', newHeightPx.toString())
     pageImg.setAttribute('alt', altText)
+    if(pageNum > 1) {
+      // for pages 2+ we'll lazy load images
+      // https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/img#loading
+      pageImg.setAttribute('loading', 'lazy')
+    }
     pageNode.appendChild(pageImg)
     dom.body.append(pageNode)
   }
