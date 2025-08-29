@@ -6,7 +6,7 @@ import { DEFAULT_WIDTH_PX } from './utilities/layout.ts'
 import { rfcImagePathBuilder } from './utilities/s3.ts'
 import type { TableOfContents } from './utilities/rfc-validators.ts'
 import type { RfcBucketHtmlDocument } from './rfc.ts'
-import { PDFPageProxy } from 'pdfjs-dist/types/web/interfaces.js'
+import type { PDFPageProxy } from 'pdfjs-dist/types/web/interfaces.js'
 
 export const fetchRfcPDF = async (
   rfcNumber: number
