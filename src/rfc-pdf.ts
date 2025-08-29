@@ -1,4 +1,5 @@
-import { extractText, getDocumentProxy } from 'unpdf'
+import { extractText, getDocumentProxy, renderPageAsImage } from 'unpdf'
+import { createCanvas } from '@napi-rs/canvas'
 import { blankRfcCommon } from './rfc.ts'
 import { PUBLIC_SITE } from './utilities/url.ts'
 import { BLANK_HTML, getDOMParser, rfcDocumentToPojo } from './utilities/dom.ts'
@@ -26,7 +27,7 @@ export const fetchRfcPDF = async (
 
 type PdfPage = {
   filename: string
-  buffer: Buffer<ArrayBufferLike>
+  buffer: ArrayBuffer
   altText: string
 }
 
@@ -36,6 +37,9 @@ export const rfcBucketPdfToRfcDocument = async (
 ): Promise<[RfcBucketHtmlDocument, PdfPage[]]> => {
   const pdfBytes = new Uint8Array(pdfBuffer)
   const pdfDocument = await getDocumentProxy(pdfBytes)
+  const { totalPages, text } = await extractText(pdfDocument, {
+    mergePages: false
+  })
 
   const pdfPages: PdfPage[] = []
 
@@ -46,49 +50,28 @@ export const rfcBucketPdfToRfcDocument = async (
   const tableOfContents: TableOfContents = { title: '', sections: [] }
 
   for (let pageNum = 1; pageNum <= pdfDocument.numPages; pageNum++) {
+    const pagePng = await renderPageAsImage(pdfBytes, pageNum, {
+      canvasImport: () => import('@napi-rs/canvas'),
+      scale: 1
+    })
     const page = await pdfDocument.getPage(pageNum)
     const pageTitle = `Page ${pageNum}`
 
     const domId = `page${pageNum}`
 
     // Extract alt text
-    const altText = await page.getTextContent()
+
+    const altText = text[pageNum]
+
     console.log({ altText })
 
-    // Create canvas for rendering
-    const scale = 1
-    const viewport = page.getViewport({ scale })
-    const viewportRatio = viewport.height / viewport.width
-    const newHeightPx = DEFAULT_WIDTH_PX * viewportRatio
-
-    const canvas = dom.createElement('canvas')
-    dom.body.append(canvas)
-    canvas.width = DEFAULT_WIDTH_PX
-    canvas.height = newHeightPx
-    canvas.style.width = Math.floor(DEFAULT_WIDTH_PX) + 'px'
-    canvas.style.height = Math.floor(newHeightPx) + 'px'
-
-    const canvasContext = canvas.getContext('2d')
-
-    if (canvasContext === null) {
-      throw Error(`Unable to canvas.getContext('2d')`)
-    }
-
-    await page.render({ canvasContext, canvas: null, viewport }).promise
-
+            
     // Convert canvas to buffer
-    const maybeBlob = await new Promise<Blob | null>((resolve) =>
-      canvas.toBlob(resolve, 'image/png')
-    )
-    if (maybeBlob === null) {
-      throw Error(`Unable to extract blob`)
-    }
-    const arrayBuffer = await maybeBlob.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
+    
 
     const filename = `${rfcNumber}-page${pageNum}.png`
 
-    pdfPages.push({ filename, buffer, altText })
+    pdfPages.push({ filename, buffer: pagePng, altText })
 
     tableOfContents.sections.push({
       links: [
@@ -99,8 +82,6 @@ export const rfcBucketPdfToRfcDocument = async (
       ]
     })
 
-    dom.body.removeChild(canvas)
-
     const pageNode = dom.createElement('div')
     const pageHeading = dom.createElement('h2')
     pageHeading.textContent = pageTitle
@@ -109,7 +90,7 @@ export const rfcBucketPdfToRfcDocument = async (
     const pageImg = dom.createElement('img')
     pageImg.setAttribute('src', rfcImagePathBuilder(filename))
     pageImg.setAttribute('width', DEFAULT_WIDTH_PX.toString())
-    pageImg.setAttribute('height', newHeightPx.toString())
+    pageImg.setAttribute('height', DEFAULT_WIDTH_PX.toString())
     pageImg.setAttribute('alt', altText)
     if (pageNum > 1) {
       // for pages 2+ we'll lazy load images
