@@ -65,7 +65,7 @@ export const getTextDetails = async (
           })
           break
         case 'GET_TEXT_DONE':
-          console.log("GET TEXT DONE", message)
+          console.log("GET TEXT DONE", message.text.totalPages)
           await cleanupChild(child)
           resolve(message)
           break
