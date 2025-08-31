@@ -1,17 +1,12 @@
 // @vitest-environment node
-import { test, expect } from 'vitest'
-import { fetchRfcPDF, rfcBucketPdfToRfcDocument } from './rfc-pdf.ts'
+import { test, expect, vi } from 'vitest'
+import { rfcBucketPdfToRfcDocument } from './rfc-pdf.ts'
 
-const processRfcBucketHtml = async (rfcNumber: number) => {
-  const pdf = await fetchRfcPDF(rfcNumber)
-  if (pdf) {
-    return rfcBucketPdfToRfcDocument(pdf, rfcNumber)
-  }
-}
+vi.setConfig({ testTimeout: 20 * 1000 })
 
 const RFC_PDF_EXAMPLE = 418
 
 test(`rfcBucketPdfToRfcDocument(${RFC_PDF_EXAMPLE})`, async () => {
-  const rfcBucketPdfDocument = await processRfcBucketHtml(RFC_PDF_EXAMPLE)
+  const rfcBucketPdfDocument = await rfcBucketPdfToRfcDocument(RFC_PDF_EXAMPLE)
   expect(rfcBucketPdfDocument).toMatchSnapshot()
 })

@@ -7,7 +7,7 @@
   "scripts": {
     "generate": "node --experimental-strip-types ./src/index.ts 1137",
     "format": "npx prettier --config ./prettier.config.cjs src --write",
-    "test": "vitest --testTimeout 10000"
+    "test": "NODE_OPTIONS='--max_old_space_size=8192' vitest --testTimeout 10000"
   },
   "repository": {
     "type": "git",
@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.842.0",
-    "@napi-rs/canvas": "0.1.78",
+    "@napi-rs/canvas": "0.1.77",
     "jsdom": "26.1.0",
     "lodash-es": "4.17.21",
     "sanitize-html": "2.17.0",

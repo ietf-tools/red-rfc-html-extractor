@@ -1,5 +1,4 @@
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
-import type {  } from '@aws-sdk/client-s3'
 
 const s3Cli = new S3Client({
   endpoint: process.env.S3_OUT_ENDPOINT ?? '',
@@ -29,4 +28,6 @@ export async function saveToS3(
 
 export const rfcJSONPathBuilder = (rfcNumber: number) => `rfc/${rfcNumber}.json` as const
 
-export const rfcImagePathBuilder = (filename: string) => `rfc/${filename}` as const
+export const rfcImageFileNameBuilder = (rfcNumber: number, pageNumber: number) => `${rfcNumber}-page-${pageNumber}.png` as const
+
+export const rfcImagePathBuilder = (fileName: string) => `rfc/${fileName}` as const

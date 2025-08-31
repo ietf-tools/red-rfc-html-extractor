@@ -1,16 +1,14 @@
-import { extractText, getDocumentProxy, renderPageAsImage } from 'unpdf'
-import { createCanvas } from '@napi-rs/canvas'
 import { blankRfcCommon } from './rfc.ts'
-import { PUBLIC_SITE } from './utilities/url.ts'
+import { apiRfcBucketDocumentURLBuilder, PUBLIC_SITE } from './utilities/url.ts'
+import { gc } from './utilities/gc.ts'
 import { BLANK_HTML, getDOMParser, rfcDocumentToPojo } from './utilities/dom.ts'
 import { DEFAULT_WIDTH_PX } from './utilities/layout.ts'
-import { rfcImagePathBuilder } from './utilities/s3.ts'
+import { rfcImageFileNameBuilder } from './utilities/s3.ts'
 import type { TableOfContents } from './utilities/rfc-validators.ts'
 import type { RfcBucketHtmlDocument } from './rfc.ts'
+import { takeScreenshotOfPage } from './utilities/pdf-page-screenshot-parent.ts'
 
-export const fetchRfcPDF = async (
-  rfcNumber: number
-): Promise<ArrayBuffer | null> => {
+export const fetchRfcPDF = async (rfcNumber: number) => {
   const url = `${PUBLIC_SITE}/rfc/rfc${rfcNumber}.pdf`
   const response = await fetch(url)
   if (!response.ok) {
@@ -19,62 +17,50 @@ export const fetchRfcPDF = async (
     )
     return null
   }
-  const blob = await response.blob()
-  const arrayBuffer = await blob.arrayBuffer()
-  const buffer = Buffer.from(arrayBuffer)
-  return buffer
+  const blob = await response.arrayBuffer()
+  return {
+    base64: Buffer.from(blob).toString('base64'),
+    blob
+  }
 }
 
 type PdfPage = {
-  filename: string
-  imageData: Buffer
+  fileName: string
   altText: string
 }
 
-const CHUNK_SIZE = 8192
-
+/**
+ * Note that this also uploads page screenshots
+ */
 export const rfcBucketPdfToRfcDocument = async (
-  pdfBuffer: ArrayBuffer,
   rfcNumber: number
-): Promise<[RfcBucketHtmlDocument, PdfPage[]]> => {
-  const pdfBytes = new Uint8Array(pdfBuffer)
-  const pdfDocument = await getDocumentProxy(pdfBytes)
-  const { totalPages, text } = await extractText(pdfDocument, {
-    mergePages: false
-  })
+): Promise<[RfcBucketHtmlDocument, PdfPage[]] | null> => {
+  const pdfData = await fetchRfcPDF(rfcNumber)
 
+  if (pdfData === null) {
+    return null
+  }
+
+  const { base64, blob } = pdfData
+
+  await gc() // attempt to free bytes from fetch
   const pdfPages: PdfPage[] = []
-
   const domParser = await getDOMParser()
-
   const dom = domParser.parseFromString(BLANK_HTML, 'text/html')
-
   const tableOfContents: TableOfContents = { title: '', sections: [] }
 
-  for (let pageNum = 1; pageNum <= pdfDocument.numPages; pageNum++) {
-    const pagePng = await renderPageAsImage(pdfBytes, pageNum, {
-      canvasImport: () => import('@napi-rs/canvas'),
-      scale: 1
-    })
-    const pageTitle = `Page ${pageNum}`
-
-    const domId = `page${pageNum}`
+  for (let pageNumber = 1; pageNumber < 10; pageNumber++) {
+    const fileName = rfcImageFileNameBuilder(rfcNumber, pageNumber)
+    await gc() // attempt to free bytes from fork
+    await takeScreenshotOfPage(base64, pageNumber, fileName)
+    const pageTitle = `Page ${pageNumber}`
+    const domId = `page${pageNumber}`
 
     // Extract alt text
 
-    const altText = text[pageNum]
+    const altText = ''
 
-    console.log({ altText })
-
-    // Convert canvas to buffer
-
-    const filename = `${rfcNumber}-page${pageNum}.png`
-
-    console.log(' - pagePng.byteLength', pagePng.byteLength)
-
-    const imageData = Buffer.from(pagePng)
-
-    pdfPages.push({ filename, imageData, altText })
+    pdfPages.push({ fileName, altText: '' })
 
     tableOfContents.sections.push({
       links: [
@@ -91,11 +77,11 @@ export const rfcBucketPdfToRfcDocument = async (
     pageHeading.id = domId
     pageNode.appendChild(pageHeading)
     const pageImg = dom.createElement('img')
-    pageImg.setAttribute('src', rfcImagePathBuilder(filename))
+    pageImg.setAttribute('src', apiRfcBucketDocumentURLBuilder(fileName))
     pageImg.setAttribute('width', DEFAULT_WIDTH_PX.toString())
     pageImg.setAttribute('height', DEFAULT_WIDTH_PX.toString())
     pageImg.setAttribute('alt', altText)
-    if (pageNum > 1) {
+    if (pageNumber > 1) {
       // for pages 2+ we'll lazy load images
       // https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/img#loading
       pageImg.setAttribute('loading', 'lazy')
