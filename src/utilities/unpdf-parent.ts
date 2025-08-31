@@ -122,9 +122,9 @@ const cleanupChild = async (child: ChildProcess) => {
 
   console.log(" - after sigterm wait for exit")
   // Wait for exit
-  await new Promise((resolve) => {
-    child.once('exit', resolve)
-  })
+  // await new Promise((resolve) => {
+  //   child.once('exit', resolve)
+  // })
   console.log(' - after process exit')
   await gc()
   console.log(" - end cleanup")
