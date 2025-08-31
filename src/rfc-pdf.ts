@@ -43,11 +43,16 @@ export const rfcBucketPdfToRfcDocument = async (
   console.log(' - after gc')
 
   const domParser = await getDOMParser()
+  console.log(' - after domparser')
   const dom = domParser.parseFromString(BLANK_HTML, 'text/html')
-  const tableOfContents: TableOfContents = { title: 'In this PDF', sections: [] }
-
+  console.log(' - after domparser parse blank html')
+  const tableOfContents: TableOfContents = {
+    title: 'In this PDF',
+    sections: []
+  }
+  console.log(' - before text details')
   const textDetails = await getTextDetails(base64)
-
+  console.log(' - after text details')
   console.log(` - looping through ${textDetails.text.totalPages} page(s)`)
 
   for (
@@ -55,9 +60,8 @@ export const rfcBucketPdfToRfcDocument = async (
     pageNumber < textDetails.text.totalPages;
     pageNumber++
   ) {
-
     const fileName = rfcImageFileNameBuilder(rfcNumber, pageNumber)
-    console.log(" - before take screenshot", fileName)
+    console.log(' - before take screenshot', fileName)
     await gc() // attempt to free bytes from fork
     await takeScreenshotOfPage(
       base64,
@@ -65,7 +69,7 @@ export const rfcBucketPdfToRfcDocument = async (
       fileName,
       shouldUploadPageImagesToS3
     )
-    console.log(" - after take screenshot")
+    console.log(' - after take screenshot')
     const pageTitle = `Page ${pageNumber}`
     const domId = `page${pageNumber}`
 
@@ -112,7 +116,7 @@ export const rfcBucketPdfToRfcDocument = async (
     }
   }
 
-  console.log(" - resposne", tableOfContents.title)
+  console.log(' - resposne', tableOfContents.title)
 
   return response
 }

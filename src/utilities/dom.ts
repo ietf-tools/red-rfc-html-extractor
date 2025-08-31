@@ -103,4 +103,4 @@ export const rfcDocumentToPojo = (rfcDocument: Node[]): DocumentPojo => {
   return rfcDocument.flatMap(walk).filter(isNodePojo)
 }
 
-export const BLANK_HTML = '<html><body></body></html>'
+export const BLANK_HTML = '<!DOCTYPE html><html><body></body></html>'
