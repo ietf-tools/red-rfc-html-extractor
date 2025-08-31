@@ -39,7 +39,9 @@ const screenshotAndUpload = async (
   // console.log(' - CHILD AFTER', screenshot.byteLength)
   if (shouldUploadToS3) {
     const uint8Array = new Uint8Array(screenshot)
-    await saveToS3(rfcImagePathBuilder(fileName), uint8Array)
+    const bucketPath = rfcImagePathBuilder(fileName)
+    await saveToS3(bucketPath, uint8Array)
+    console.log(` - uploaded screenshot of page ${pageNumber} to ${bucketPath}`)
   }
 }
 
