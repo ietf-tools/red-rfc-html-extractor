@@ -25,26 +25,23 @@ export const fetchRfcPDF = async (rfcNumber: number) => {
   return Buffer.from(blob).toString('base64')
 }
 
-type PdfPage = {
-  fileName: string
-  altText: string
-}
-
 /**
  * Note that this also uploads page screenshots
  */
 export const rfcBucketPdfToRfcDocument = async (
   rfcNumber: number,
   shouldUploadPageImagesToS3: boolean
-): Promise<[RfcBucketHtmlDocument, PdfPage[]] | null> => {
+): Promise<RfcBucketHtmlDocument | null> => {
+  console.log(" - before fetch")
   const base64 = await fetchRfcPDF(rfcNumber)
-
+  console.log(" - after fetch")
   if (base64 === null) {
     return null
   }
-
+console.log("before gc")
   await gc() // attempt to free memory after fetch()
-  const pdfPages: PdfPage[] = []
+  console.log("after gc")
+  
   const domParser = await getDOMParser()
   const dom = domParser.parseFromString(BLANK_HTML, 'text/html')
   const tableOfContents: TableOfContents = { title: '', sections: [] }
@@ -68,10 +65,7 @@ export const rfcBucketPdfToRfcDocument = async (
     const domId = `page${pageNumber}`
 
     // Extract alt text
-
-    const altText = ''
-
-    pdfPages.push({ fileName, altText: '' })
+    const altText = textDetails.text.text[pageNumber - 1]
 
     tableOfContents.sections.push({
       links: [
@@ -101,7 +95,7 @@ export const rfcBucketPdfToRfcDocument = async (
     dom.body.append(pageNode)
   }
 
-  const doc: RfcBucketHtmlDocument = {
+  const response: RfcBucketHtmlDocument = {
     rfc: structuredClone(blankRfcCommon),
     tableOfContents,
     documentHtmlType: 'pdf-or-ps',
@@ -113,5 +107,5 @@ export const rfcBucketPdfToRfcDocument = async (
     }
   }
 
-  return [doc, pdfPages]
+  return response
 }
