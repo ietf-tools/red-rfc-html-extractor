@@ -48,12 +48,16 @@ export const rfcBucketPdfToRfcDocument = async (
 
   const textDetails = await getTextDetails(base64)
 
+  console.log(` - looping through ${textDetails.text.totalPages} page(s)`)
+
   for (
     let pageNumber = 1;
     pageNumber < textDetails.text.totalPages;
     pageNumber++
   ) {
+
     const fileName = rfcImageFileNameBuilder(rfcNumber, pageNumber)
+    console.log(" - before take screenshot", fileName)
     await gc() // attempt to free bytes from fork
     await takeScreenshotOfPage(
       base64,
@@ -61,6 +65,7 @@ export const rfcBucketPdfToRfcDocument = async (
       fileName,
       shouldUploadPageImagesToS3
     )
+    console.log(" - after take screenshot")
     const pageTitle = `Page ${pageNumber}`
     const domId = `page${pageNumber}`
 
