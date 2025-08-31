@@ -6,7 +6,10 @@ import { DEFAULT_WIDTH_PX } from './utilities/layout.ts'
 import { rfcImageFileNameBuilder } from './utilities/s3.ts'
 import type { TableOfContents } from './utilities/rfc-validators.ts'
 import type { RfcBucketHtmlDocument } from './rfc.ts'
-import { takeScreenshotOfPage } from './utilities/pdf-page-screenshot-parent.ts'
+import {
+  getTextDetails,
+  takeScreenshotOfPage
+} from './utilities/unpdf-parent.ts'
 
 export const fetchRfcPDF = async (rfcNumber: number) => {
   const url = `${PUBLIC_SITE}/rfc/rfc${rfcNumber}.pdf`
@@ -18,10 +21,8 @@ export const fetchRfcPDF = async (rfcNumber: number) => {
     return null
   }
   const blob = await response.arrayBuffer()
-  return {
-    base64: Buffer.from(blob).toString('base64'),
-    blob
-  }
+
+  return Buffer.from(blob).toString('base64')
 }
 
 type PdfPage = {
@@ -33,26 +34,36 @@ type PdfPage = {
  * Note that this also uploads page screenshots
  */
 export const rfcBucketPdfToRfcDocument = async (
-  rfcNumber: number
+  rfcNumber: number,
+  shouldUploadPageImagesToS3: boolean
 ): Promise<[RfcBucketHtmlDocument, PdfPage[]] | null> => {
-  const pdfData = await fetchRfcPDF(rfcNumber)
+  const base64 = await fetchRfcPDF(rfcNumber)
 
-  if (pdfData === null) {
+  if (base64 === null) {
     return null
   }
 
-  const { base64, blob } = pdfData
-
-  await gc() // attempt to free bytes from fetch
+  await gc() // attempt to free memory after fetch()
   const pdfPages: PdfPage[] = []
   const domParser = await getDOMParser()
   const dom = domParser.parseFromString(BLANK_HTML, 'text/html')
   const tableOfContents: TableOfContents = { title: '', sections: [] }
 
-  for (let pageNumber = 1; pageNumber < 10; pageNumber++) {
+  const textDetails = await getTextDetails(base64)
+
+  for (
+    let pageNumber = 1;
+    pageNumber < textDetails.text.totalPages;
+    pageNumber++
+  ) {
     const fileName = rfcImageFileNameBuilder(rfcNumber, pageNumber)
     await gc() // attempt to free bytes from fork
-    await takeScreenshotOfPage(base64, pageNumber, fileName)
+    await takeScreenshotOfPage(
+      base64,
+      pageNumber,
+      fileName,
+      shouldUploadPageImagesToS3
+    )
     const pageTitle = `Page ${pageNumber}`
     const domId = `page${pageNumber}`
 
