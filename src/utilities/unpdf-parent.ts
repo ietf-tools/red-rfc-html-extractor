@@ -5,10 +5,16 @@ import { gc } from './gc.ts'
 import { sleep } from './sleep.ts'
 import type { ChildProcess } from 'node:child_process'
 
+/**
+ * Something in unpdf seems to leak memory, so taking eg 10 screenshots
+ * of pages will cause heap overflow.
+ * This wrapper uses a fork to isolate unpdf and then kill the process.
+ */
+
 const forkPath = join(import.meta.dirname, 'unpdf-child.ts')
 
 export const takeScreenshotOfPage = async (
-  pdfData: string,
+  base64: string,
   pageNumber: number,
   fileName: string,
   shouldUploadToS3: boolean
@@ -24,7 +30,7 @@ export const takeScreenshotOfPage = async (
         case 'READY':
           child.send({
             type: 'SCREENSHOT_PAGE',
-            base64Data: pdfData,
+            base64Data: base64,
             pageNumber,
             fileName,
             shouldUploadToS3: shouldUploadToS3.toString()
@@ -42,7 +48,7 @@ export const takeScreenshotOfPage = async (
 }
 
 export const getTextDetails = async (
-  pdfData: string
+  base64: string
 ): Promise<z.infer<typeof GetTextSchema>> => {
   return new Promise((resolve) => {
     const child = fork(forkPath)
@@ -55,7 +61,7 @@ export const getTextDetails = async (
         case 'READY':
           child.send({
             type: 'GET_TEXT',
-            base64Data: pdfData
+            base64Data: base64
           })
           break
         case 'GET_TEXT_DONE':
