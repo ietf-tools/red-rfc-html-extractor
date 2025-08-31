@@ -16,6 +16,7 @@ export const processRfc = async (rfcNumber: number): Promise<boolean> => {
   // Some RFCs don't have HTML eg RFC418, so try PDF
   // Note that this will upload page images
   const rfcDocFromPdf = await rfcBucketPdfToRfcDocument(rfcNumber, true)
+  console.log(' - received doc', rfcDocFromPdf?.documentHtmlType)
   if (rfcDocFromPdf) {
     validateRfcBucketHtmlDocument(rfcDocFromPdf)
     await saveToS3(rfcJSONPathBuilder(rfcNumber), JSON.stringify(rfcDocFromPdf))

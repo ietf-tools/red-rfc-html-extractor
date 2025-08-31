@@ -32,19 +32,19 @@ export const rfcBucketPdfToRfcDocument = async (
   rfcNumber: number,
   shouldUploadPageImagesToS3: boolean
 ): Promise<RfcBucketHtmlDocument | null> => {
-  console.log(" - before fetch")
+  console.log(' - before fetch')
   const base64 = await fetchRfcPDF(rfcNumber)
-  console.log(" - after fetch")
+  console.log(' - after fetch')
   if (base64 === null) {
     return null
   }
-console.log("before gc")
+  console.log(' - before gc')
   await gc() // attempt to free memory after fetch()
-  console.log("after gc")
-  
+  console.log(' - after gc')
+
   const domParser = await getDOMParser()
   const dom = domParser.parseFromString(BLANK_HTML, 'text/html')
-  const tableOfContents: TableOfContents = { title: '', sections: [] }
+  const tableOfContents: TableOfContents = { title: 'In this PDF', sections: [] }
 
   const textDetails = await getTextDetails(base64)
 
@@ -106,6 +106,8 @@ console.log("before gc")
       maxWithAnchorSuffix: 80
     }
   }
+
+  console.log(" - resposne", tableOfContents.title)
 
   return response
 }
