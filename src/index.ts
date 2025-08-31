@@ -16,10 +16,10 @@ export const processRfc = async (rfcNumber: number): Promise<boolean> => {
   const rfcDoc = await rfcBucketPdfToRfcDocument(rfcNumber, true)
   if (rfcDoc) {
     await saveToS3(rfcJSONPathBuilder(rfcNumber), JSON.stringify(rfcDoc))
-    console.log(` - generated rfcDoc for ${rfcNumber}`)
+    console.log(` - uploaded rfcDoc for ${rfcNumber}`)
     return true
   } else {
-    console.error(` - unable to generate rfcDoc for ${rfcNumber}`)
+    console.error(` - unable to generate rfcDoc from PDF for RFC ${rfcNumber}`)
     return false
   }
 
