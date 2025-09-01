@@ -1,7 +1,9 @@
 import { z } from 'zod'
+import sharp from 'sharp'
 import { renderPageAsImage, extractText } from 'unpdf'
-import { DEFAULT_WIDTH_PX } from './layout.ts'
+import { PDF_WIDTH_PX } from './layout.ts'
 import { rfcImagePathBuilder, saveToS3 } from './s3.ts'
+import { compressImageToPng, isSharpImageGreyscale } from './image.ts'
 
 process.on('message', async (messageFromParent: unknown) => {
   const message = parseMessageFromParent(messageFromParent)
@@ -20,6 +22,7 @@ process.on('message', async (messageFromParent: unknown) => {
     case 'GET_TEXT':
       const text = await getText(message.base64Data)
       send({ type: 'GET_TEXT_DONE', text })
+      break
   }
 })
 
@@ -29,19 +32,22 @@ const screenshotAndUpload = async (
   fileName: string,
   shouldUploadToS3: boolean
 ): Promise<void> => {
+  
   const blob = parseBase64Data(base64Data)
   // console.log('- CHILD before', blob.byteLength)
   const screenshot = await renderPageAsImage(blob, pageNumber, {
     canvasImport: () => import('@napi-rs/canvas'),
     scale: 1,
-    width: DEFAULT_WIDTH_PX
+    width: PDF_WIDTH_PX
   })
-  // console.log(' - CHILD AFTER', screenshot.byteLength)
+  const sharpImage = sharp(screenshot)
+  const isGreyscale = await isSharpImageGreyscale(sharpImage)
+  const png = await compressImageToPng(sharpImage, isGreyscale)
+  // console.log(` - CHILD screenshot compression (${isGreyscale ? 'greyscale' : 'colour'}) vs `, screenshot.byteLength, png.byteLength)
   if (shouldUploadToS3) {
-    const uint8Array = new Uint8Array(screenshot)
     const bucketPath = rfcImagePathBuilder(fileName)
-    await saveToS3(bucketPath, uint8Array)
-    console.log(` - uploaded screenshot of page ${pageNumber} to ${bucketPath}`)
+    await saveToS3(bucketPath, png)
+    // console.log(` - uploaded screenshot of page ${pageNumber} to ${bucketPath}`)
   }
 }
 
@@ -83,7 +89,7 @@ type Text = {
   // the typescript to extract individual overload signatures of getText
   // is far more complicated than just hardcoding the type we want
   totalPages: number
-  text: string[] 
+  text: string[]
 }
 
 type SendMessages =

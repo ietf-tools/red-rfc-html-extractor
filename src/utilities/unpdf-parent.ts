@@ -65,7 +65,6 @@ export const getTextDetails = async (
           })
           break
         case 'GET_TEXT_DONE':
-          console.log("GET TEXT DONE", message.text.totalPages)
           await cleanupChild(child)
           resolve(message)
           break
@@ -105,27 +104,26 @@ const parseMessageFromChild = (message: unknown) => {
 }
 
 const cleanupChild = async (child: ChildProcess) => {
-  console.log(" - in cleanup")
   await sleep(50)
-  console.log(" - cleanup after sleep")
+
   // Remove all event listeners
   child.removeAllListeners()
   // Disconnect IPC channel
   child.disconnect()
-  console.log(" - cleanup disconnect")
+
   // Call unref if process is detached
   if (process.platform !== 'win32') {
     child.unref()
   }
-  console.log(" - sigterm")
+
   child.kill('SIGTERM')
 
-  console.log(" - after sigterm wait for exit")
+  // The following code seems to make the current (parent) process exit.
+  //
   // Wait for exit
   // await new Promise((resolve) => {
   //   child.once('exit', resolve)
   // })
-  console.log(' - after process exit')
+
   await gc()
-  console.log(" - end cleanup")
 }

@@ -1,1 +1,5 @@
-export const DEFAULT_WIDTH_PX = 724  // taken from width of this SVG at 1920x1080 window size https://www.rfc-editor.org/rfc/rfc9692.html#name-rift-information-distributi
+/**
+ * Remaining width available in the new design, in the middle column (not the sidebar),
+ * at 1920px... ie, maximum width without causing horizontal scrollbars
+ */
+export const PDF_WIDTH_PX = 1186

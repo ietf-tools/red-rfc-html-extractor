@@ -2,7 +2,6 @@ import { blankRfcCommon } from './rfc.ts'
 import { apiRfcBucketDocumentURLBuilder, PUBLIC_SITE } from './utilities/url.ts'
 import { gc } from './utilities/gc.ts'
 import { BLANK_HTML, getDOMParser, rfcDocumentToPojo } from './utilities/dom.ts'
-import { DEFAULT_WIDTH_PX } from './utilities/layout.ts'
 import { rfcImageFileNameBuilder } from './utilities/s3.ts'
 import type { TableOfContents } from './utilities/rfc-validators.ts'
 import type { RfcBucketHtmlDocument } from './rfc.ts'
@@ -10,6 +9,7 @@ import {
   getTextDetails,
   takeScreenshotOfPage
 } from './utilities/unpdf-parent.ts'
+import { PDF_WIDTH_PX } from './utilities/layout.ts'
 
 export const fetchRfcPDF = async (rfcNumber: number) => {
   const url = `${PUBLIC_SITE}/rfc/rfc${rfcNumber}.pdf`
@@ -32,28 +32,27 @@ export const rfcBucketPdfToRfcDocument = async (
   rfcNumber: number,
   shouldUploadPageImagesToS3: boolean
 ): Promise<RfcBucketHtmlDocument | null> => {
-  console.log(' - before fetch')
   const base64 = await fetchRfcPDF(rfcNumber)
-  console.log(' - after fetch')
+
   if (base64 === null) {
     return null
   }
-  console.log(' - before gc')
+
   await gc() // attempt to free memory after fetch()
-  console.log(' - after gc')
 
   const domParser = await getDOMParser()
-  console.log(' - after domparser')
   const dom = domParser.parseFromString(BLANK_HTML, 'text/html')
-  console.log(' - after domparser parse blank html')
+
   const tableOfContents: TableOfContents = {
     title: 'In this PDF',
     sections: []
   }
-  console.log(' - before text details')
+
   const textDetails = await getTextDetails(base64)
-  console.log(' - after text details')
-  console.log(` - looping through ${textDetails.text.totalPages} page(s)`)
+
+  const pdfPages = dom.createElement('div')
+  pdfPages.setAttribute('data-component', 'PdfPages')
+  dom.body.appendChild(pdfPages)
 
   for (
     let pageNumber = 1;
@@ -61,7 +60,7 @@ export const rfcBucketPdfToRfcDocument = async (
     pageNumber++
   ) {
     const fileName = rfcImageFileNameBuilder(rfcNumber, pageNumber)
-    console.log(' - before take screenshot', fileName)
+
     await gc() // attempt to free bytes from fork
     await takeScreenshotOfPage(
       base64,
@@ -69,12 +68,12 @@ export const rfcBucketPdfToRfcDocument = async (
       fileName,
       shouldUploadPageImagesToS3
     )
-    console.log(' - after take screenshot')
+
     const pageTitle = `Page ${pageNumber}`
     const domId = `page${pageNumber}`
 
     // Extract alt text
-    const altText = textDetails.text.text[pageNumber - 1]
+    const pageText = textDetails.text.text[pageNumber - 1]
 
     tableOfContents.sections.push({
       links: [
@@ -86,22 +85,25 @@ export const rfcBucketPdfToRfcDocument = async (
     })
 
     const pageNode = dom.createElement('div')
-    const pageHeading = dom.createElement('h2')
-    pageHeading.textContent = pageTitle
-    pageHeading.id = domId
-    pageNode.appendChild(pageHeading)
+
+    if (pageNumber > 1) {
+      // add a divider between pages
+      const pageHr = dom.createElement('hr')
+      pageNode.appendChild(pageHr)
+    }
+
     const pageImg = dom.createElement('img')
     pageImg.setAttribute('src', apiRfcBucketDocumentURLBuilder(fileName))
-    pageImg.setAttribute('width', DEFAULT_WIDTH_PX.toString())
-    pageImg.setAttribute('height', DEFAULT_WIDTH_PX.toString())
-    pageImg.setAttribute('alt', altText)
+    pageImg.setAttribute('id', domId)
+    pageImg.setAttribute('width', PDF_WIDTH_PX.toString())
+    pageImg.setAttribute('alt', `Page ${pageNumber}: ${pageText}`)
     if (pageNumber > 1) {
       // for pages 2+ we'll lazy load images
       // https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/img#loading
       pageImg.setAttribute('loading', 'lazy')
     }
     pageNode.appendChild(pageImg)
-    dom.body.append(pageNode)
+    pdfPages.append(pageNode)
   }
 
   const response: RfcBucketHtmlDocument = {
@@ -115,8 +117,6 @@ export const rfcBucketPdfToRfcDocument = async (
       maxWithAnchorSuffix: 80
     }
   }
-
-  console.log(' - resposne', tableOfContents.title)
 
   return response
 }

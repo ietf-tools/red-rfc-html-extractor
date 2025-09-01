@@ -4,7 +4,6 @@ import type { MaxPreformattedLineLengthSchemaType } from './utilities/rfc-valida
 import { blankRfcCommon } from './rfc.ts'
 import type { RfcEditorToc } from './rfc.ts'
 import type { RfcAndToc } from './rfc-html.ts'
-import { DEFAULT_WIDTH_PX } from './utilities/layout.ts'
 
 type TocSections = RfcEditorToc['sections']
 type TocSection = TocSections[number]
@@ -345,6 +344,8 @@ const wrapSvg = (svg: HTMLElement): HTMLElement => {
     heightCSSLength: string
     heightPx: number
   } => {
+    const DEFAULT_SVG_WIDTH_PX = 724 // taken from width of this SVG at 1920x1080 window size https://www.rfc-editor.org/rfc/rfc9692.html#name-rift-information-distributi
+
     const parseLength = (lengthAttr: string | null): number => {
       if (lengthAttr === null) return Number.NaN
       const parts = parseCSSLength(lengthAttr)
@@ -362,7 +363,7 @@ const wrapSvg = (svg: HTMLElement): HTMLElement => {
       return `${parts[0]}${parts[1]}`
     }
 
-    const DEFAULT_HEIGHT_PX = DEFAULT_WIDTH_PX
+    const DEFAULT_SVG_HEIGHT_PX = DEFAULT_SVG_WIDTH_PX
 
     const widthAttr = el.getAttribute('width')
     let widthPx = parseLength(widthAttr)
@@ -370,8 +371,8 @@ const wrapSvg = (svg: HTMLElement): HTMLElement => {
     let heightPx = parseLength(heightAttr)
 
     if (Number.isNaN(widthPx) || Number.isNaN(heightPx)) {
-      widthPx = DEFAULT_WIDTH_PX
-      heightPx = DEFAULT_HEIGHT_PX
+      widthPx = DEFAULT_SVG_WIDTH_PX
+      heightPx = DEFAULT_SVG_HEIGHT_PX
 
       // fallback to using viewBox to determine a height that fits that aspect ratio
       const viewBoxAttr = el.getAttribute('viewBox')
