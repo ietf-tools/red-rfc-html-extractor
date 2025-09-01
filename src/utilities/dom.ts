@@ -76,10 +76,7 @@ export const rfcDocumentToPojo = (rfcDocument: Node[]): DocumentPojo => {
     if (isHtmlElement(node)) {
       return {
         type: 'Element',
-        // the nodeName name is either:
-        // 1) the data-component attribute (eg, 'HorizontalScrollable')
-        // 2) the html element nodeName (eg 'a' or 'pre')
-        nodeName: node.dataset.component ?? node.nodeName.toLowerCase(),
+        nodeName: node.nodeName.toLowerCase(),
         attributes: elementAttributesToObject(node.attributes),
         children: Array.from(node.childNodes).flatMap(walk).filter(isNodePojo)
       }
