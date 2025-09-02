@@ -65,7 +65,6 @@ export const compressImageToPng = async (
 ): Promise<Buffer> => {
   if (forceGreyscale) {
     return sharpImage
-      .grayscale()
       .bandbool(sharp.bool.and)
       .png({ compressionLevel: 9 })
       .toBuffer()
