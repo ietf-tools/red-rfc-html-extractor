@@ -32,7 +32,6 @@ const screenshotAndUpload = async (
   fileName: string,
   shouldUploadToS3: boolean
 ): Promise<void> => {
-  
   const blob = parseBase64Data(base64Data)
   // console.log('- CHILD before', blob.byteLength)
   const screenshot = await renderPageAsImage(blob, pageNumber, {
@@ -42,8 +41,7 @@ const screenshotAndUpload = async (
   })
   const sharpImage = sharp(screenshot)
   const isGreyscale = await isSharpImageGreyscale(sharpImage)
-  const png = await compressImageToPng(sharpImage, isGreyscale)
-  // console.log(` - CHILD screenshot compression (${isGreyscale ? 'greyscale' : 'colour'}) vs `, screenshot.byteLength, png.byteLength)
+  const png = await compressImageToPng(sharpImage, isGreyscale ? 'compress-greyscale' : 'compress')
   if (shouldUploadToS3) {
     const bucketPath = rfcImagePathBuilder(fileName)
     await saveToS3(bucketPath, png)

@@ -61,13 +61,21 @@ export const isSharpImageGreyscale = async (
 
 export const compressImageToPng = async (
   sharpImage: SharpImage,
-  forceGreyscale: boolean
+  mode: 'compress' | 'compress-greyscale'
 ): Promise<Buffer> => {
-  if (forceGreyscale) {
-    return sharpImage
-      .bandbool(sharp.bool.and)
-      .png({ compressionLevel: 9 })
-      .toBuffer()
+  const compressionLevel = 9
+  switch (mode) {
+    case 'compress':
+      return sharpImage.png({ compressionLevel }).toBuffer()
+    case 'compress-greyscale':
+      return sharpImage
+        .greyscale(true)
+        .png({
+          compressionLevel: 9,
+          colours:
+            // 64 greys oughta be enough for anyone
+            64
+        })
+        .toBuffer()
   }
-  return sharpImage.png({ compressionLevel: 9 }).toBuffer()
 }
