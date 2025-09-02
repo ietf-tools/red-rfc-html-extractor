@@ -32,6 +32,7 @@ i TA SA- ne s Rese a r ch Cent e r
 Ho f f e tt Fie l d , C l~ 9l~ 0 3 5
 (415 ) 965 - 6033 or
 (408 ) 736- 7439",
+                "height": "1292",
                 "id": "page1",
                 "src": "https://www.rfc-editor.org/api/v1/rfc-html/418-page-1.png",
                 "width": "1000",
@@ -104,6 +105,7 @@ d o cum en t a t i on ) a r ec o r d c orr e s p o nd s to a 1 i n c ; t h e r c
 r ec o r d mark e rs in the da t a it s el f (C R-L?, NL, r:OL) . Th e TSS e d i t o r s
 require t his , t h e t r r.ns l a t o r s re q uir e thi s and so for t h. Thi s do es not
 p r e c l ud e h av i .n g a n EBCDIC "n ew- Li n c " cl a ra c te r ( NL) in h e c a t a , how",
+                "height": "1292",
                 "id": "page2",
                 "loading": "lazy",
                 "src": "https://www.rfc-editor.org/api/v1/rfc-html/418-page-2.png",
@@ -169,6 +171,7 @@ As ca n be se en f r om th e a bove d i scus s ion , th i s should n ot b . a pr
 ready i n lu d i n g e n d-o f- r e c ord info rma i on a t t he e nd o f e a ch ph ysi c a l
 1 i.n e ( CR- LF) . Thu s th e on l y r e qu i r mont wou l d be t o no t r e j e c t t he
 STRU R c omm a nd ( a t le a s t in NODE S, TYP E A t r an s f e r s) . Thi s may c a us e",
+                "height": "1292",
                 "id": "page3",
                 "loading": "lazy",
                 "src": "https://www.rfc-editor.org/api/v1/rfc-html/418-page-3.png",
@@ -233,6 +236,7 @@ c omma nd i s requ i r ed for "lo g-on" and c ode 1~ 3 3 be a s s i gne .d t o "
 ACCT " when the .ecl' c ommand is requ i ted on ly for a part i c ular t r a ns f e r
 op e r a t ion . It is fel t that this wou ld a i d us er automata i n s a t i s f y i ng
 p ar t i c u l a r s e r ve r r e qui r emen t s .",
+                "height": "1292",
                 "id": "page4",
                 "loading": "lazy",
                 "src": "https://www.rfc-editor.org/api/v1/rfc-html/418-page-4.png",
@@ -300,6 +304,7 @@ T he STOR c onau a n d is S lip o r t e d in a c c o r dan c e wi t h th e p r o
 mo t c r mus r be a va lid f u l ly qual if ied d atase t n amc , H it h u n l i mi t e d o r
 r <' nd - wr i t . a c c e s s requ i r ed f o r e x i s t ing sh a re d d a t a s e t s . The c h a r a c
 t e r i s l ic s o f t he TSS da ta set be ing sto r ed a r e de t er~ mi ne d a s f ol l ows .",
+                "height": "1292",
                 "id": "page5",
                 "loading": "lazy",
                 "src": "https://www.rfc-editor.org/api/v1/rfc-html/418-page-5.png",
@@ -366,6 +371,7 @@ de l et th e c a t a l o g e ntr y only
 For s hared da t a s e t s :
 ~Ib li c or p riv a t e d i r e c t - ~ c c es s , un l i mit e d s ha r i ng :
 e ras e ( f r e e the spac e ) a nd de le te the c a t a l og e n t r y .",
+                "height": "1292",
                 "id": "page6",
                 "loading": "lazy",
                 "src": "https://www.rfc-editor.org/api/v1/rfc-html/418-page-6.png",
@@ -433,6 +439,7 @@ The LIST c o mm a nd pr oduc e s ou tpu t i de nt ic a l to the s ho r t and lon
 ST,\\T c omm and ( pa r ame t c r e qu ired ) e xc e p t t h a t th e lo ng form is t he de
 fault ; to ge t t he short f orm , the chnr a c t er s " , HORT " must be a ppe nded
 to th e p~r am ete r .",
+                "height": "1292",
                 "id": "page7",
                 "loading": "lazy",
                 "src": "https://www.rfc-editor.org/api/v1/rfc-html/418-page-7.png",
@@ -500,6 +507,7 @@ th a t th e lIs e r process do e s n ot k n m'" ""he n a l l o u :pu t has be en
 If a NOP co mma 1u we re c1 -f i ne d , t h e tls er pro c ess c o u ld s e nd a NOP upo n
 r ec ei pt of t h e dis ca r d r e qu e~t , and t h en di s ca rd un t il t he unique NO P
 esp o n s e i s rec e i v ed .",
+                "height": "1292",
                 "id": "page8",
                 "loading": "lazy",
                 "src": "https://www.rfc-editor.org/api/v1/rfc-html/418-page-8.png",
@@ -570,6 +578,7 @@ fo r th e tra n sf e t o c omple te ) .
 Some s mall i t ems missing fr om t he p r o t o c o l a r e 11m·1 me n t i one d .
 \\
 \\",
+                "height": "1292",
                 "id": "page9",
                 "loading": "lazy",
                 "src": "https://www.rfc-editor.org/api/v1/rfc-html/418-page-9.png",

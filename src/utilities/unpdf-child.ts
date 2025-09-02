@@ -11,13 +11,13 @@ process.on('message', async (messageFromParent: unknown) => {
   // console.log(' - PDF was', message.base64Data.length)
   switch (message.type) {
     case 'SCREENSHOT_PAGE':
-      await screenshotAndUpload(
+      const screenshotDimensions = await screenshotAndUpload(
         message.base64Data,
         message.pageNumber,
         message.fileName,
         message.shouldUploadToS3 === true.toString()
       )
-      send({ type: 'SCREENSHOT_PAGE_DONE' })
+      send({ type: 'SCREENSHOT_PAGE_DONE', screenshotDimensions })
       break
     case 'GET_TEXT':
       const text = await getText(message.base64Data)
@@ -26,12 +26,14 @@ process.on('message', async (messageFromParent: unknown) => {
   }
 })
 
+type ImageDimensions = { widthPx: number, heightPx: number }
+
 const screenshotAndUpload = async (
   base64Data: string,
   pageNumber: number,
   fileName: string,
   shouldUploadToS3: boolean
-): Promise<void> => {
+): Promise<ImageDimensions> => {
   const blob = parseBase64Data(base64Data)
   // console.log('- CHILD before', blob.byteLength)
   const screenshot = await renderPageAsImage(blob, pageNumber, {
@@ -40,6 +42,7 @@ const screenshotAndUpload = async (
     width: PDF_WIDTH_PX
   })
   const sharpImage = sharp(screenshot)
+  const metadata = await sharpImage.metadata()
   const isGreyscale = await isSharpImageGreyscale(sharpImage)
   const png = await compressImageToPng(sharpImage, isGreyscale ? 'compress-greyscale' : 'compress')
   if (shouldUploadToS3) {
@@ -47,6 +50,8 @@ const screenshotAndUpload = async (
     await saveToS3(bucketPath, png)
     // console.log(` - uploaded screenshot of page ${pageNumber} to ${bucketPath}`)
   }
+  // TODO: send back dimensions of image to parent
+  return { widthPx: metadata.width, heightPx: metadata.height }
 }
 
 const getText = async (base64Data: string) => {
@@ -92,7 +97,7 @@ type Text = {
 
 type SendMessages =
   | { type: 'READY' }
-  | { type: 'SCREENSHOT_PAGE_DONE' }
+  | { type: 'SCREENSHOT_PAGE_DONE', screenshotDimensions: ImageDimensions }
   | { type: 'GET_TEXT_DONE'; text: Text }
 
 const send = (msg: SendMessages) => {

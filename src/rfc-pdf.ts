@@ -48,6 +48,10 @@ export const rfcBucketPdfToRfcDocument = async (
     sections: []
   }
 
+  // FIXME: the extracted altText has unnecessary spaces in it, breaking up words and harming readability
+  // perhaps consider instead of alt text just rendering transparent text in the page like PDF.js does. We could 
+  // extract the coordinaate of text and overlay it. I have no reason to think this would be better for screen readers
+  // but it might allow copy pasting of text (albeit with unnecessary spaces)
   const textDetails = await getTextDetails(base64)
 
   const pdfPages = dom.createElement('div')
@@ -62,7 +66,7 @@ export const rfcBucketPdfToRfcDocument = async (
     const fileName = rfcImageFileNameBuilder(rfcNumber, pageNumber)
 
     await gc() // attempt to free bytes from fork
-    await takeScreenshotOfPage(
+    const screenshotDimensions = await takeScreenshotOfPage(
       base64,
       pageNumber,
       fileName,
@@ -95,7 +99,8 @@ export const rfcBucketPdfToRfcDocument = async (
     const pageImg = dom.createElement('img')
     pageImg.setAttribute('src', apiRfcBucketDocumentURLBuilder(fileName))
     pageImg.setAttribute('id', domId)
-    pageImg.setAttribute('width', PDF_WIDTH_PX.toString())
+    pageImg.setAttribute('width', screenshotDimensions.widthPx.toString())
+    pageImg.setAttribute('height', screenshotDimensions.heightPx.toString())
     pageImg.setAttribute('alt', `Page ${pageNumber}: ${pageText}`)
     if (pageNumber > 1) {
       // for pages 2+ we'll lazy load images

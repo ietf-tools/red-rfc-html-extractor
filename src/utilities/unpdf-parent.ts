@@ -18,7 +18,7 @@ export const takeScreenshotOfPage = async (
   pageNumber: number,
   fileName: string,
   shouldUploadToS3: boolean
-): Promise<void> => {
+): Promise<ImageDimensions> => {
   return new Promise((resolve) => {
     const child = fork(forkPath)
     child.on('message', async (_message) => {
@@ -38,7 +38,7 @@ export const takeScreenshotOfPage = async (
           break
         case 'SCREENSHOT_PAGE_DONE':
           await cleanupChild(child)
-          resolve()
+          resolve(message.screenshotDimensions)
           break
         case 'GET_TEXT_DONE':
           throw Error('Unexpected message while taking screenshot')
@@ -83,12 +83,20 @@ const GetTextSchema = z.object({
   })
 })
 
+const ImageDimensionsSchema = z.object({
+  widthPx: z.number(),
+  heightPx: z.number()
+})
+
+type ImageDimensions = z.infer<typeof ImageDimensionsSchema>
+
 const ReceiveMessagesSchema = z.union([
   z.object({
     type: z.literal('READY')
   }),
   z.object({
-    type: z.literal('SCREENSHOT_PAGE_DONE')
+    type: z.literal('SCREENSHOT_PAGE_DONE'),
+    screenshotDimensions: ImageDimensionsSchema
   }),
   GetTextSchema
 ])
