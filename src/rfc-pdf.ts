@@ -60,7 +60,7 @@ export const rfcBucketPdfToRfcDocument = async (
 
   for (
     let pageNumber = 1;
-    pageNumber < textDetails.text.totalPages;
+    pageNumber <= textDetails.text.totalPages;
     pageNumber++
   ) {
     const fileName = rfcImageFileNameBuilder(rfcNumber, pageNumber)
