@@ -7,7 +7,9 @@ type SharpImage = ReturnType<typeof sharp>
  *
  * Useful to know whether it's safe to compress an image down to 1 channel from 3 channels
  */
-export const isSharpImageGreyscale = async (sharpImage: SharpImage): Promise<boolean> => {
+export const isSharpImageGreyscale = async (
+  sharpImage: SharpImage
+): Promise<boolean> => {
   const greyscaleThreshold = 1
 
   try {
@@ -62,7 +64,11 @@ export const compressImageToPng = async (
   forceGreyscale: boolean
 ): Promise<Buffer> => {
   if (forceGreyscale) {
-    return sharpImage.grayscale().png({ compressionLevel: 9 }).toBuffer()
+    return sharpImage
+      .grayscale()
+      .bandbool(sharp.bool.and)
+      .png({ compressionLevel: 9 })
+      .toBuffer()
   }
   return sharpImage.png({ compressionLevel: 9 }).toBuffer()
 }
